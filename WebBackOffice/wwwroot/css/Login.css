@@ -1,0 +1,159 @@
+* {
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    margin: 0;
+    height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+
+keyframes fadeIn {
+    from
+
+{
+    opacity: 0;
+    transform: translateY(15px);
+}
+
+to {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+}
+
+.login-card h2 {
+    text-align: center;
+    margin-bottom: 8px;
+    color: #2c5364;
+}
+
+.login-card p {
+    text-align: center;
+    color: #777;
+    font-size: 14px;
+    margin-bottom: 25px;
+}
+
+.form-group {
+    margin-bottom: 18px;
+}
+
+    .form-group label {
+        font-size: 13px;
+        color: #555;
+        margin-bottom: 6px;
+        display: block;
+    }
+
+    .form-group input {
+        width: 100%;
+        padding: 11px 12px;
+        border-radius: 6px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+        transition: border-color .3s, box-shadow .3s;
+    }
+
+        .form-group input:focus {
+            outline: none;
+            border-color: #2c5364;
+            box-shadow: 0 0 0 2px rgba(44,83,100,.15);
+        }
+
+.btn-login {
+    width: 100%;
+    padding: 12px;
+    border: none;
+    border-radius: 6px;
+    background: linear-gradient(135deg, #203a43, #2c5364);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform .2s, box-shadow .2s;
+}
+
+    .btn-login:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 8px 18px rgba(0,0,0,.25);
+    }
+
+.error {
+    margin-top: 15px;
+    background: #ffe5e5;
+    color: #b00020;
+    padding: 10px;
+    border-radius: 6px;
+    font-size: 13px;
+    text-align: center;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 18px;
+    font-size: 12px;
+    color: #999;
+}
+
+
+/* CONTENEDOR GENERAL */
+
+
+.login-wrapper {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* PANEL IZQUIERDO */
+.login-illustration {
+    width: 45%;
+    background: linear-gradient(135deg, #203a43, #2c5364);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+    .login-illustration img {
+        max-width: 360px;
+        width: 100%;
+        height: auto;
+    }
+/* PANEL DERECHO */
+.login-card {
+    width: 55%;
+    max-width: 420px;
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+
+
+/* MOBILE */
+@media (max-width: 768px) {
+    .login-illustration {
+        display: none;
+    }
+
+    .login-card {
+        width: 100%;
+    }
+}
+
+
+.login-card h2 {
+    color: #ffffff;
+    font-weight: 700;
+}
+
+.login-card p {
+    color: rgba(255, 255, 255, 0.85);
+}

@@ -1,0 +1,239 @@
+﻿@page "/Aprendizaje/Dashboard"
+@model WebBackOffice.Pages.Aprendizaje.DashboardModel
+
+<h3 class="fw-bold mb-3">Dashboard de Aprendizaje</h3>
+
+<!-- ================= FILTROS ================= -->
+<form method="get" class="card shadow-sm mb-4">
+    <div class="card-body row g-3">
+
+        <div class="col-md-2">
+            <label>Año</label>
+            <select class="form-select"
+                    name="Anio"
+                    onchange="this.form.submit()">
+                <option value="">Todos</option>
+                @foreach (var a in Model.Anios)
+                {
+                    <option value="@a" selected="@(a == Model.Anio)">
+                        @a
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-2">
+            <label>Mes</label>
+            <select class="form-select"
+                    name="Mes"
+                    onchange="this.form.submit()">
+                <option value="">Todos</option>
+                @foreach (var m in Model.Meses)
+                {
+                    <option value="@m" selected="@(m == Model.Mes)">
+                        @m
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label>Ejecutivo</label>
+            <select class="form-select"
+                    name="Ejecutivo"
+                    onchange="this.form.submit()">
+                <option value="">Todos</option>
+                @foreach (var e in Model.EjecutivosFiltro)
+                {
+                    <option value="@e" selected="@(e == Model.Ejecutivo)">
+                        @e
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="col-md-3">
+            <label>Producto</label>
+            <select class="form-select"
+                    name="Producto"
+                    onchange="this.form.submit()">
+                <option value="">Todos</option>
+                @foreach (var p in Model.ProductosFiltro)
+                {
+                    <option value="@p" selected="@(p == Model.Producto)">
+                        @p
+                    </option>
+                }
+            </select>
+        </div>
+        @if (HttpContext.Session.GetString("Rol") == "EsAdmin")
+        {
+
+
+            <div class="text-end">
+                <button type="button"
+                        class="btn btn-primary mb-3"
+                        data-bs-toggle="modal"
+                        data-bs-target="#modalCargarExcel">
+                    📊 Cargar Resultados
+                </button>
+            </div>
+           
+        }
+
+    </div>
+</form>
+
+
+
+<div class="alert alert-primary text-center fw-bold fs-4">
+    Cumplimiento General: @Model.CumplimientoGeneral%
+</div>
+
+<hr />
+
+<h5 class="fw-bold">Ejecutivos</h5>
+
+
+<div class="row">
+    @foreach (var p in Model.Productos)
+    {
+        string color =
+        p.Porcentaje <= 50 ? "#dc3545" :
+        p.Porcentaje <= 70 ? "#fd7e14" :
+        "#198754";
+
+        <div class="col-md-4 mb-3">
+            <div class="card text-center p-3 shadow-sm">
+                <strong>@p.Producto</strong>
+                <h3 style="color:@color">@p.Porcentaje%</h3>
+            </div>
+        </div>
+    }
+</div>
+
+<div class="row">
+    @foreach (var e in Model.Ejecutivos)
+    {
+        <div class="col-md-3 mb-3">
+            <a asp-page="/Aprendizaje/Dashboard"
+               asp-route-Ejecutivo="@e.Ejecutivo"
+               asp-route-Anio="@Model.Anio"
+               asp-route-Mes="@Model.Mes"
+               asp-route-Producto="@Model.Producto"
+               class="card shadow-sm p-3 text-center text-decoration-none
+                   @(Model.Ejecutivo == e.Ejecutivo ? "border border-primary" : "")">
+
+                <strong>@e.Ejecutivo</strong>
+
+                <div class="progress mt-2">
+                    <div class="progress-bar"
+                         style="width:@e.Porcentaje%">
+                        @e.Porcentaje%
+                    </div>
+                </div>
+            </a>
+        </div>
+    }
+</div>
+
+<hr />
+
+
+<!-- ================= DESCRIPCIÓN PRODUCTOS ================= -->
+@if (Model.Comentarios.Any())
+{
+    <hr />
+    <h5 class="fw-bold">Detalle por Producto</h5>
+
+    @foreach (var item in Model.Comentarios)
+    {
+        <div class="card shadow-sm mb-3">
+            <div class="card-header fw-bold">@item.PRODUCTO</div>
+            <div class="card-body">
+                <p><strong>Resumen:</strong> @item.RESUMEN</p>
+                <p><strong>Insight:</strong> @item.INSIGHT</p>
+
+                <strong>Preguntas:</strong>
+                <ul>
+                    @foreach (var p in item.PREGUNTAS.Split('¿', StringSplitOptions.RemoveEmptyEntries))
+                    {
+                        <li>¿@p</li>
+                    }
+                </ul>
+            </div>
+        </div>
+    }
+}
+
+
+<div class="modal fade" id="modalCargarExcel" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+
+            <form method="post"
+                  enctype="multipart/form-data"
+                  asp-page-handler="CargarExcel">
+
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Cargar resultados desde Excel</h5>
+                    <button type="button" class="btn-close"
+                            data-bs-dismiss="modal"></button>
+                </div>
+
+                <div class="modal-body">
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">
+                            Seleccione archivo Excel
+                        </label>
+
+                        <input type="file"
+                               name="ArchivoExcel"
+                               class="form-control"
+                               accept=".xlsx,.xls"
+                               required />
+                    </div>
+
+                    <div class="alert alert-info small">
+                        El archivo debe estar en formato Excel (.xlsx / .xls)
+                    </div>
+
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button"
+                            class="btn btn-secondary"
+                            data-bs-dismiss="modal">
+                        Cancelar
+                    </button>
+
+                    <button type="submit"
+                            class="btn btn-success">
+                        Subir archivo
+                    </button>
+                </div>
+
+            </form>
+
+        </div>
+    </div>
+</div>
+
+
+
+@if (TempData["MensajeExito"] != null)
+{
+    <div class="alert alert-success alert-dismissible fade show">
+        @TempData["MensajeExito"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
+
+@if (TempData["MensajeError"] != null)
+{
+    <div class="alert alert-danger alert-dismissible fade show">
+        @TempData["MensajeError"]
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+}
