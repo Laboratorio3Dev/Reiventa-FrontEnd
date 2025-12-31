@@ -1,3 +1,4 @@
+/* RESET */
 * {
     box-sizing: border-box;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -13,7 +14,10 @@ body {
     min-height: 100vh;
 }
 
-/* SIDEBAR */
+/* =====================
+   SIDEBAR
+===================== */
+
 .sidebar {
     width: 250px;
     background: linear-gradient(180deg, #203a43, #2c5364);
@@ -21,6 +25,7 @@ body {
     padding: 25px 20px;
 }
 
+    /* TÍTULO */
     .sidebar h2 {
         text-align: center;
         margin-bottom: 35px;
@@ -29,38 +34,82 @@ body {
     }
 
 .menu-item {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
-    .menu-item > span {
-        display: block;
-        padding: 12px 15px;
-        font-weight: 600;
-        border-radius: 8px;
-        cursor: default;
-        background: rgba(255,255,255,.1);
+/* MENÚ PADRE */
+.menu-title {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 15px;
+    font-weight: 600;
+    border-radius: 8px;
+    cursor: pointer;
+    background: rgba(255,255,255,.1);
+    transition: background .2s;
+}
+
+    .menu-title:hover {
+        background: rgba(255,255,255,.18);
     }
 
+/* TEXTO + ICONO */
+.menu-text {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.menu-icon {
+    font-size: 16px;
+}
+
+/* SUBMENU */
 .submenu {
+    display: none;
     margin-top: 8px;
+    padding-left: 15px;
 }
 
-    .submenu a {
-        display: block;
-        padding: 10px 15px;
-        color: #e0e0e0;
-        text-decoration: none;
-        font-size: 14px;
-        border-radius: 8px;
-        margin-bottom: 5px;
-        transition: background .2s;
+.menu-item.open .submenu {
+    display: block;
+}
+
+.submenu a {
+    display: block;
+    padding: 10px 15px;
+    color: #e0e0e0;
+    text-decoration: none;
+    font-size: 14px;
+    border-radius: 8px;
+    margin-bottom: 5px;
+    transition: background .2s;
+}
+
+    .submenu a:hover {
+        background: rgba(255,255,255,.15);
     }
 
-        .submenu a:hover {
-            background: rgba(255,255,255,.15);
-        }
+.submenu-icon {
+    font-size: 14px;
+    margin-right: 8px;
+}
 
-/* CONTENT */
+/* FLECHA */
+.arrow {
+    transition: transform .3s ease;
+    font-size: 14px;
+}
+
+.menu-item.open .arrow {
+    transform: rotate(90deg);
+}
+
+/* =====================
+   CONTENT
+===================== */
+
 .content {
     flex: 1;
     padding: 30px;
@@ -101,23 +150,52 @@ body {
         color: #b00020;
     }
 
-/* =========================
+/* =====================
    RESPONSIVE
-========================= */
+===================== */
 
+/* TABLET */
 @media (max-width: 1024px) {
     .sidebar {
         width: 200px;
     }
 }
 
+/* MOBILE */
 @media (max-width: 768px) {
-    .layout {
-        flex-direction: column;
-    }
 
     .sidebar {
+        position: fixed;
+        top: 0;
+        left: -280px;
+        width: 260px;
+        height: 100vh;
+        z-index: 1050;
+        transition: left .3s ease;
+    }
+
+        .sidebar.open {
+            left: 0;
+        }
+
+    .sidebar-overlay {
         display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0,0,0,.45);
+        z-index: 1040;
+    }
+
+        .sidebar-overlay.show {
+            display: block;
+        }
+
+    .menu-toggle {
+        background: none;
+        border: none;
+        font-size: 22px;
+        cursor: pointer;
+        color: #2c5364;
     }
 
     .content {
@@ -125,21 +203,26 @@ body {
     }
 
     .topbar {
-        flex-direction: column;
-        align-items: flex-start;
+        flex-direction: row;
         gap: 12px;
     }
+}
 
-    .user-menu {
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 8px;
+/* OCULTAR BOTÓN EN DESKTOP */
+@media (min-width: 769px) {
+    .menu-toggle {
+        display: none;
     }
 }
 
-@media (max-width: 480px) {
-    .topbar h1 {
-        font-size: 16px;
-    }
+.producto-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
 }
+
+    .producto-card.border-success {
+        border-width: 2px;
+    }
+
+
 

@@ -1,0 +1,78 @@
+﻿@page
+@model WebBackOffice.Pages.Ofertas.HistorialPLDModel
+@{
+    ViewData["Title"] = "Historial de Consultas";
+}
+
+<h2 class="page-title">📋 Historial de Consultas</h2>
+
+<!-- FILTROS -->
+<form method="post" class="filters-card">
+
+    <div class="filters-grid">
+
+        <div class="form-group">
+            <label>Usuario</label>
+            <input asp-for="FiltroUsuario" class="form-control" placeholder="Usuario" />
+        </div>
+
+        <div class="form-group">
+            <label>Fecha inicio</label>
+            <input asp-for="FechaInicio" type="date" class="form-control" />
+        </div>
+
+        <div class="form-group">
+            <label>Fecha fin</label>
+            <input asp-for="FechaFin" type="date" class="form-control" />
+        </div>
+
+        <div class="form-group actions">
+            <button type="submit" class="btn btn-primary">
+                🔍 Buscar
+            </button>
+        </div>
+
+    </div>
+
+</form>
+
+<!-- RESULTADOS -->
+@if (Model.Resultados != null && Model.Resultados.Any())
+{
+    <div class="table-card">
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th>Documento</th>
+                    <th>Usuario</th>
+                    <th>Fecha</th>
+                    <th>¿Cliente?</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model.Resultados)
+                {
+                    <tr>
+                        <td>@item.Documento</td>
+                        <td>@item.Usuario</td>
+                        <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>
+                            @if (item.EsCliente)
+                            {
+                                <span class="badge success">Sí</span>
+                            }
+                            else
+                            {
+                                <span class="badge danger">No</span>
+                            }
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else if (Model.BusquedaRealizada)
+{
+    <p class="no-results">No se encontraron resultados.</p>
+}

@@ -20,3 +20,146 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+
+.access-denied-container {
+    min-height: 100vh;
+    background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.access-card {
+    background: #ffffff;
+    padding: 45px 40px;
+    border-radius: 14px;
+    width: 420px;
+    text-align: center;
+    box-shadow: 0 20px 40px rgba(0,0,0,.25);
+    animation: fadeIn 0.6s ease-in-out;
+}
+
+    .access-card .icon {
+        font-size: 64px;
+        margin-bottom: 15px;
+    }
+
+    .access-card h1 {
+        font-size: 26px;
+        margin-bottom: 15px;
+        color: #333;
+    }
+
+    .access-card p {
+        color: #666;
+        margin-bottom: 30px;
+        font-size: 15px;
+    }
+
+.actions .btn {
+    display: inline-block;
+    padding: 12px 25px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    background: #203a43;
+    color: #fff;
+    transition: all .3s ease;
+}
+
+    .actions .btn:hover {
+        background: #2c5364;
+    }
+
+.help {
+    margin-top: 25px;
+    font-size: 13px;
+    color: #999;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(15px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+.page-title {
+    margin-bottom: 20px;
+}
+
+.filters-card {
+    background: #fff;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 25px;
+    box-shadow: 0 5px 15px rgba(0,0,0,.08);
+}
+
+.filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.actions {
+    display: flex;
+    align-items: end;
+}
+
+.table-card {
+    background: #fff;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+    .table-custom th,
+    .table-custom td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+.badge {
+    padding: 6px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 600;
+}
+
+    .badge.success {
+        background: #e6f4ea;
+        color: #1e7e34;
+    }
+
+    .badge.danger {
+        background: #fdecea;
+        color: #b02a37;
+    }
+
+.no-results {
+    color: #777;
+    margin-top: 15px;
+}
+
+
+.producto-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.producto-card.border-success {
+    border-width: 2px;
+}
+
+
+

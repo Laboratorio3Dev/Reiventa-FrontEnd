@@ -1,0 +1,75 @@
+﻿@page
+@model WebBackOffice.Pages.Ofertas.PLDModel
+@{
+    ViewData["Title"] = "Ventas Digitales";
+}
+
+<h2>PLD Consumo</h2>
+
+<p>
+    HOLA, con el objetivo de agilizar el proceso de venta queremos facilitarte el acceso a las ofertas de PLD Consumo. Para ellos sigue las siguientes instrucciones:
+</p>
+
+<ol>
+    <li>Registra el DNI  del cliente para verificar qué ofertas tiene disponibles.</li>
+
+</ol>
+
+<form method="post" class="mb-4">
+    <div class="d-flex align-items-end gap-2">
+        <div>
+            <label class="form-label">DNI del Cliente</label>
+            <input asp-for="Dni"
+                   id="dniInput"
+                   class="form-control form-control-sm"
+                   style="width: 180px"
+                   maxlength="8"
+                   inputmode="numeric"
+                   autocomplete="off"
+                   placeholder="Ingrese DNI" />
+        </div>
+
+        <button type="submit"
+                id="btnBuscar"
+                class="btn btn-primary btn-sm"
+                disabled>
+            Buscar
+        </button>
+    </div>
+</form>
+
+@if (Model.Ofertas != null && Model.Ofertas.Any())
+{
+    <div class="card mt-4">
+        <div class="card-header text-center">
+            <strong>Préstamo PLD Consumo</strong><br />
+            <span class="text-success">Tiene oferta</span>
+        </div>
+
+        <table class="table table-bordered mb-0">
+            <thead class="table-light">
+                <tr>
+                    <th>Plazo</th>
+                    <th>Monto</th>
+                    <th>Tasa</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var o in Model.Ofertas)
+                {
+                    <tr>
+                        <td>@o.Plazo</td>
+                        <td>@o.Monto</td>
+                        <td>@o.Tasa %</td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+else if (!string.IsNullOrEmpty(Model.Mensaje))
+{
+    <div class="alert alert-warning mt-4">
+        @Model.Mensaje
+    </div>
+}

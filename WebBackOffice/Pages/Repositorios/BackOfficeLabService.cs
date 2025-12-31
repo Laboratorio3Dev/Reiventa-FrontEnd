@@ -2,9 +2,11 @@
 
 
 using Microsoft.AspNetCore.Components.Forms;
+using System.Net;
 using System.Net.Http.Headers;
 using WebBackOffice.DTO.Aprendizaje;
 using WebBackOffice.DTO.BackOffice;
+using WebBackOffice.DTO.Ofertas;
 
 namespace WebBackOffice.Pages.Repositorios
 {
@@ -12,9 +14,9 @@ namespace WebBackOffice.Pages.Repositorios
     {
         private readonly HttpClient _http;
 
-        public BackOfficeLabService(HttpClient http)
+        public BackOfficeLabService(IHttpClientFactory http)
         {
-            _http = http;
+            _http = http.CreateClient("ApiClient");
         }
 
         public async Task<LoginResponse> LoginAsync(string Usuario, string Password)
@@ -204,6 +206,7 @@ namespace WebBackOffice.Pages.Repositorios
             return null;
         }
 
+
         public async Task<ResponseTransacciones?> CargarExcel(
                 string token,
                 IFormFile file,
@@ -239,6 +242,76 @@ namespace WebBackOffice.Pages.Repositorios
             Console.WriteLine(error);
 
             return null;
+        }
+
+        public async Task<OfertaPlDRow?> ValidarOfertaPLD(
+    string token,
+    OfertaRequest request)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _http.PostAsJsonAsync(
+                "api/BackOffice/Ofertas/ValidarOfertaPLD",
+                request
+            );
+
+            // 👉 Cliente sin oferta (API devuelve 404)
+            if (response.StatusCode == HttpStatusCode.NotFound)
+                return null;
+
+            // 👉 Error real
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new ApplicationException(
+                    $"Error API ({response.StatusCode}): {error}");
+            }
+
+            // 👉 204 No Content o body vacío
+            if (response.Content.Headers.ContentLength == 0)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<OfertaPlDRow>();
+        }
+
+        public async Task<ResponseTransacciones?> CambiarPassword(string token, CambiarPasswordRequest request)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+              new AuthenticationHeaderValue("Bearer", token);
+            var response = await _http.PostAsJsonAsync("api/BackOffice/Login/CambiarPassword", request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<ResponseTransacciones>();
+            }
+
+            return null;
+        }
+
+        public async Task<ResponseTransacciones?> CargarClientesPLD(string token, IFormFile archivo)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            using var content = new MultipartFormDataContent();
+            using var stream = archivo.OpenReadStream();
+
+            content.Add(
+                new StreamContent(stream),
+                "archivo",
+                archivo.FileName
+            );
+
+            var response = await _http.PostAsync(
+                "api/BackOffice/Ofertas/CargarBaseClientes",
+                content
+            );
+
+            if (!response.IsSuccessStatusCode)
+                return null;
+
+            return await response.Content.ReadFromJsonAsync<ResponseTransacciones>();
         }
 
     }

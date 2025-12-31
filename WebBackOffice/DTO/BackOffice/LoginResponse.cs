@@ -12,6 +12,7 @@
             public string? ErrorMessage { get; set; }
             public ICollection<Menu> MenuUsuario { get; set; } = new List<Menu>();
             public ICollection<Rol> RolesUsuario { get; set; } = new List<Rol>();
-        }
+            public int IdOficina { get; set; }
+    }
 
 }
