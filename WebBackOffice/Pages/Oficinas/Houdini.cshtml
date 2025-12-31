@@ -1,0 +1,174 @@
+﻿@page "/Oficinas/Houdini"
+@model WebBackOffice.Pages.Oficinas.HoudiniModel
+
+<!-- ================= PASO 1 ================= -->
+<div id="paso1">
+
+    <h4 class="mb-2">Ventas Digitales en Oficina</h4>
+
+    <p class="text-muted">
+        HOLA, con el objetivo de agilizar los procesos de venta queremos facilitarte
+        que puedas seguir el proceso de <strong>Venta Digital</strong>, siempre
+        registrándolo como una venta tuya.
+    </p>
+
+    <p class="mb-2">Para ello sigue las siguientes instrucciones:</p>
+
+    <ol class="mb-4">
+        <li>Registra los datos del cliente para verificar qué ofertas digitales tiene disponibles.</li>
+        <li>Selecciona el producto que desea comprar.</li>
+        <li>Al cliente le llegará un link a su correo con el proceso de venta digital.</li>
+    </ol>
+
+    <form id="formPaso1">
+        @Html.AntiForgeryToken()
+
+        <div class="mb-2">
+            <label class="form-label">Nombre del Cliente</label>
+            <input class="form-control" name="NombreCliente" maxlength="50" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">DNI del Cliente</label>
+            <input class="form-control" name="DocumentoCliente" maxlength="9" />
+        </div>
+
+        <div class="mb-2">
+            <label class="form-label">Correo Electrónico</label>
+            <input class="form-control" name="CorreoCliente" type="email"
+                   placeholder="Correo Electrónico" maxlength="50"/>
+        </div>
+
+        
+
+        <div class="mb-3">
+            <label class="form-label">Código de Vendedor</label>
+            <input class="form-control" name="CodigoVendedor"  maxlength="5"/>
+        </div>
+
+        <button type="button"
+                class="btn btn-success"
+                onclick="irPaso2()">
+            Consultar Ofertas
+        </button>
+    </form>
+
+    <div id="erroresPaso1" class="alert alert-danger mt-3 d-none"></div>
+</div>
+
+<!-- ================= PASO 2 ================= -->
+<div id="paso2" class="d-none">
+
+    <h4 class="mb-3">Selecciona los productos</h4>
+
+    <form id="formPaso2" method="post" asp-page-handler="Enviar">
+        @Html.AntiForgeryToken()
+
+        <div class="row">
+            @for (int i = 0; i < Model.Productos.Count; i++)
+            {
+                <div class="col-md-4 mb-3">
+                    <div class="card p-3 shadow-sm producto-card"
+                         onclick="toggleCard(this)">
+
+                        <div class="form-check mb-2">
+                            <input type="checkbox"
+                                   class="form-check-input no-click"
+                                   tabindex="-1" />
+                            <label class="form-check-label">Seleccionar</label>
+                        </div>
+
+                        <input type="checkbox"
+                               name="ProductosSeleccionados"
+                               value="@Model.Productos[i].IdProducto"
+                               class="d-none" />
+
+                        <h5>@Model.Productos[i].Titulo</h5>
+                        <p>@Model.Productos[i].SubTitulo</p>
+                    </div>
+                </div>
+            }
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="validarYEnviar()">
+            Enviar Oferta
+        </button>
+    </form>
+    <br />
+    <div id="errorPaso2" class="alert alert-danger d-none mb-3">
+    </div>
+</div>
+
+<script>
+    function irPaso2() {
+        const form = document.getElementById('formPaso1');
+        const data = new FormData(form);
+
+        const token = form.querySelector(
+            'input[name="__RequestVerificationToken"]'
+        ).value;
+
+        fetch('?handler=ValidarCliente', {
+            method: 'POST',
+            body: data,
+            headers: {
+                'RequestVerificationToken': token
+            }
+        })
+        .then(r => {
+            if (!r.ok) {
+                throw new Error('Error en la validación');
+            }
+            return r.json();
+        })
+        .then(r => {
+            if (!r.ok) {
+                const err = document.getElementById('erroresPaso1');
+                err.innerText = r.mensaje;
+                err.classList.remove('d-none');
+                return;
+            }
+
+            document.getElementById('paso1').classList.add('d-none');
+            document.getElementById('paso2').classList.remove('d-none');
+        })
+        .catch(e => {
+            console.error(e);
+            alert('Error al validar cliente');
+        });
+    }
+
+    function toggleCard(card) {
+        const real = card.querySelector('input[name="ProductosSeleccionados"]');
+        const visual = card.querySelector('.no-click');
+
+        real.checked = !real.checked;
+        visual.checked = real.checked;
+
+        card.classList.toggle('border-success', real.checked);
+        card.classList.toggle('bg-light', real.checked);
+    }
+
+        function validarYEnviar() {
+
+        const seleccionados = document.querySelectorAll(
+            'input[name="ProductosSeleccionados"]:checked'
+        );
+
+        const error = document.getElementById('errorPaso2');
+
+        // ❌ No seleccionó productos
+        if (seleccionados.length === 0) {
+            error.innerText = 'Debe seleccionar al menos un producto';
+            error.classList.remove('d-none');
+            return;
+        }
+
+        // ✅ OK → enviar
+        error.classList.add('d-none');
+
+        const form = document.getElementById('formPaso2');
+        form.submit(); // 🔥 ahora SÍ existe
+    }
+</script>
+

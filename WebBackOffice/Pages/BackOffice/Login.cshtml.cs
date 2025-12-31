@@ -36,6 +36,8 @@ public class LoginModel : PageModel
             // 🔐 Guardar sesión (ejemplo simple)
             HttpContext.Session.SetString("Username", response.NombreCompleto);
             HttpContext.Session.SetString("Usuario", response.UsuarioWindows);
+            HttpContext.Session.SetString("Correo", response.Correo);
+            HttpContext.Session.SetString("IdOficina", response.IdOficina.ToString());
             HttpContext.Session.SetString("Token", response.Token);
             HttpContext.Session.SetString("MenuUsuario",JsonSerializer.Serialize(response.MenuUsuario));
 

@@ -214,3 +214,15 @@ body {
         display: none;
     }
 }
+
+.producto-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+    .producto-card.border-success {
+        border-width: 2px;
+    }
+
+
+
