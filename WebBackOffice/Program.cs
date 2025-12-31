@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
+using System.Net.Http.Headers;
 using WebBackOffice.DTO.BackOffice;
 using WebBackOffice.Pages.Repositorios;
 
@@ -12,7 +13,7 @@ builder.Services.AddRazorPages();
 builder.Services.Configure<ApiSettings>(
     builder.Configuration.GetSection("ApiSettings"));
 
-builder.Services.AddHttpClient<BackOfficeLabService>((sp, client) =>
+builder.Services.AddHttpClient("ApiClient", (sp, client) =>
 {
     var settings = sp.GetRequiredService<IOptions<ApiSettings>>().Value;
 
@@ -21,8 +22,9 @@ builder.Services.AddHttpClient<BackOfficeLabService>((sp, client) =>
 
     client.BaseAddress = new Uri(settings.BaseUrl);
     client.DefaultRequestHeaders.Accept.Add(
-        new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+        new MediaTypeWithQualityHeaderValue("application/json"));
 });
+
 
 builder.Services.Configure<FormOptions>(options =>
 {
@@ -46,6 +48,12 @@ builder.Services.AddAuthorization();
 builder.Services.AddRazorPages();
 
 builder.Services.AddScoped<UserSessionService>();
+
+builder.Services.AddScoped<HoudiniServices>();
+builder.Services.AddScoped<BackOfficeLabService>();
+
+
+
 builder.Services.AddSession();
 
 var app = builder.Build();

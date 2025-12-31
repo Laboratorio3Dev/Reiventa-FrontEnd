@@ -14,9 +14,9 @@ namespace WebBackOffice.Pages.Repositorios
     {
         private readonly HttpClient _http;
 
-        public BackOfficeLabService(HttpClient http)
+        public BackOfficeLabService(IHttpClientFactory http)
         {
-            _http = http;
+            _http = http.CreateClient("ApiClient");
         }
 
         public async Task<LoginResponse> LoginAsync(string Usuario, string Password)

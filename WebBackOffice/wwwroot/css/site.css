@@ -21,6 +21,7 @@ body {
   margin-bottom: 60px;
 }
 
+
 .access-denied-container {
     min-height: 100vh;
     background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
@@ -149,3 +150,16 @@ body {
     color: #777;
     margin-top: 15px;
 }
+
+
+.producto-card {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.producto-card.border-success {
+    border-width: 2px;
+}
+
+
+
