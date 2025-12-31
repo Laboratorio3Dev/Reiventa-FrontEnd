@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 
 using WebBackOffice.DTO.Aprendizaje;
@@ -6,6 +7,7 @@ using WebBackOffice.Pages.Repositorios;
 
 namespace WebBackOffice.Pages.Aprendizaje
 {
+    [Authorize(Roles = "Admin,Admin Aprendizaje,Gerente Oficina Aprendizaje,Ejecutivo Aprendizaje")]
     public class DashboardModel : PageModel
     {
         private readonly BackOfficeLabService _service;
