@@ -1,0 +1,27 @@
+﻿@page
+@model WebBackOffice.Pages.BackOffice.AccesoDenegadoModel
+@{
+    ViewData["Title"] = "Acceso denegado";
+}
+
+<div class="access-denied-container">
+    <div class="access-card">
+        <div class="icon">🚫</div>
+
+        <h1>Acceso denegado</h1>
+
+        <p>
+            No tienes permisos suficientes para acceder a esta sección del sistema.
+        </p>
+
+        <div class="actions">
+            <a href="/" class="btn btn-primary">
+                ⬅ Volver al inicio
+            </a>
+        </div>
+
+        <div class="help">
+            Si crees que esto es un error, contacta con el administrador.
+        </div>
+    </div>
+</div>

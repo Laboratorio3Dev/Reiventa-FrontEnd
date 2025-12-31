@@ -1,0 +1,46 @@
+﻿@page
+@model WebBackOffice.Pages.Ofertas.CargaPLDModel
+
+@{
+    ViewData["Title"] = "Carga PLD";
+}
+
+<h3>Carga masiva de Ofertas PLD</h3>
+
+<form method="post"
+      enctype="multipart/form-data"
+      onsubmit="mostrarLoading()">
+
+    <div class="mb-3">
+        <label class="form-label">Archivo TXT</label>
+        <input asp-for="ArchivoTxt"
+               type="file"
+               accept=".txt"
+               class="form-control"
+               required />
+    </div>
+
+    <button class="btn btn-primary">
+        <i class="bi bi-upload me-1"></i> Cargar archivo
+    </button>
+</form>
+
+<!-- LOADING -->
+<div id="loading" class="mt-4 text-center d-none">
+    <div class="spinner-border text-primary"></div>
+    <p class="mt-2">Procesando archivo, por favor espere…</p>
+</div>
+
+@if (!string.IsNullOrEmpty(Model.Mensaje))
+{
+    <div class="alert @(Model.EsError ? "alert-danger" : "alert-success") mt-4">
+        @Model.Mensaje
+    </div>
+}
+
+
+    <script>
+        function mostrarLoading() {
+            document.getElementById("loading").classList.remove("d-none");
+        }
+    </script>
