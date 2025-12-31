@@ -8,12 +8,14 @@ using WebBackOffice.Pages.Repositorios;
 namespace WebBackOffice.Pages.Aprendizaje
 {
     using Aspose.Cells;
+    using Microsoft.AspNetCore.Authorization;
     using Microsoft.AspNetCore.Http;
 
 
     using System.Reflection;
     using WebBackOffice.DTO.Aprendizaje;
 
+    [Authorize(Roles = "Admin,Admin Aprendizaje,Gerente Oficina Aprendizaje,Ejecutivo Aprendizaje")]
     public class PlanAccionModel : PageModel
     {
         private readonly BackOfficeLabService _service;
