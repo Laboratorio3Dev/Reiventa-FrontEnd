@@ -314,5 +314,21 @@ namespace WebBackOffice.Pages.Repositorios
             return await response.Content.ReadFromJsonAsync<ResponseTransacciones>();
         }
 
+        public async Task<List<HistorialConsultaDto>> ListarHistorialSolicitudesPLD(string token, HistorialConsultasRequestDTO request)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+              new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _http.PostAsJsonAsync("api/BackOffice/Ofertas/ListarHistorialSolicitudesPLD", request);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<HistorialConsultaDto>>();
+            }
+
+            return null;
+        }
+
     }
 }

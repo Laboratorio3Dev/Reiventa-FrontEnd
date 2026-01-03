@@ -62,7 +62,9 @@
                         <div class="submenu">
                             @foreach (var hijo in padre.Hijos)
                             {
-                                <a href="@hijo.Url">
+                          
+
+                                <a href="@(Url.Content("~/") + hijo.Url.TrimStart('/'))">
                                     <i class="@hijo.Icono submenu-icon"></i>
                                     @hijo.Titulo
                                 </a>
