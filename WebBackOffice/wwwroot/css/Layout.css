@@ -226,3 +226,10 @@ body {
 
 
 
+.hasError {
+    border-color: #f44336 !important;
+}
+
+.field-validation-error {
+    color: red !important;
+}
