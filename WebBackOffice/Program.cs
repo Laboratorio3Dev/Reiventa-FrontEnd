@@ -45,10 +45,12 @@ builder.Services.AddAuthorization();
 
 builder.Services.AddRazorPages();
 builder.Services.AddScoped<NPSService>();
+
 builder.Services.AddScoped<UserSessionService>();
 
 builder.Services.AddScoped<HoudiniServices>();
 builder.Services.AddScoped<BackOfficeLabService>();
+builder.Services.AddScoped<AdminHoudiniServices>();
 
 ExcelPackage.License.SetNonCommercialOrganization("WebBackOffice");
 
