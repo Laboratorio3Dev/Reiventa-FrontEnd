@@ -1,0 +1,241 @@
+﻿@page "/NPS/Encuesta/Responder"
+@model WebBackOffice.Pages.NPS.Encuesta.ResponderEncuestaModel
+@using WebEncuestaRespuesta.DTO.NPS
+
+@{
+    ViewData["Title"] = "Encuestas";
+}
+
+@if (Model.Encuesta is null)
+{
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Cargando encuesta...</p>
+        @if (!string.IsNullOrWhiteSpace(Model.ErrorCarga))
+        {
+            <p class="text-danger">@Model.ErrorCarga</p>
+        }
+    </div>
+}
+else
+{
+    <section class="banbif-calificacion banbif-bg-white">
+        <div class="container">
+            <div class="survey-container">
+                <h1 class="survey-title">@Model.Encuesta.TituloEncuesta</h1>
+
+                @if (!string.IsNullOrWhiteSpace(Model.ErrorGuardar))
+                {
+                    <div class="alert alert-danger">@Model.ErrorGuardar</div>
+                }
+
+                <form method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" name="encuesta" value="@Model.encuestaEnctriptada" />
+                    <input type="hidden" name="u" value="@Model.usuarioEncriptado" />
+
+                    <div class="question-section">
+                        @foreach (var preg in Model.Encuesta.EncuestaPreguntas.OrderBy(x => x.Orden))
+                        {
+                            var orden = preg.Orden!.Value;
+
+                            if (preg.TipoPregunta == "Escala Numérica")
+                            {
+                                <p class="question-text">@($"{orden}. {preg.Pregunta}")</p>
+                                <p class="question-text-mobile left">No lo recomendaría</p>
+
+                                <div class="rating-scale"
+                                     data-orden="@orden"
+                                     data-rangomax="@preg.RangoMaximo"
+                                     data-textodetractor="@preg.TextoDetractor"
+                                     data-textoneutro="@preg.TextoNeutro"
+                                     data-textopromotor="@preg.TextoPromotor"
+                                     data-flagcomentario="@(preg.FlagComentario ? "1" : "0")">
+
+                                    @for (int i = preg.RangoMinimo ?? 0; i <= (preg.RangoMaximo ?? 10); i++)
+                                    {
+                                        var name = $"Respuesta[{orden}]";
+                                        var id = $"nps-{orden}-{i}";
+
+                                        <label class="rating-item">
+                                            <input type="radio"
+                                                   id="@id"
+                                                   name="@name"
+                                                   value="@i"
+                                                   @(Model.PrefillRespuesta.TryGetValue(orden, out var v) && v == i ? "checked" : "")
+                                                   onchange="onNpsChanged(@orden, @preg.RangoMaximo)" />
+                                            <span>@i</span>
+
+                                            @if (i == preg.RangoMinimo)
+                                            {
+                                                <span class="rating-label">@preg.TextoValorMinimo</span>
+                                            }
+                                            else if (i == preg.RangoMaximo)
+                                            {
+                                                <span class="rating-label">@preg.TextoValorMaximo</span>
+                                            }
+                                        </label>
+                                    }
+                                </div>
+
+                                <p class="question-text-mobile right">Sí lo recomendaría</p>
+
+                                if (preg.FlagComentario)
+                                {
+                                    <div id="nps-comment-wrap-@orden" style="display:none; margin-top:10px;">
+                                        <p class="sub-question-text" id="nps-comment-title-@orden"></p>
+                                        <div class="text-area-container">
+                                            <textarea maxlength="300"
+                                      class="extrainfo form-control"
+                                      name="Comentario[@orden]">@Model.PrefillComentario.GetValueOrDefault(orden)</textarea>
+                                            <div class="char-counter">
+                                                <span class="charcount">00</span>/300
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else if (preg.TipoPregunta == "Escala de Likert" && preg.ValoresY != null && preg.ValoresX != null)
+                            {
+                                <p class="question-text">@($"{orden}. {preg.Pregunta}")</p>
+
+                                var valoresX = preg.ValoresX.Split('|').Select(x => x.Trim()).ToList();
+                                var valoresY = preg.ValoresY.Split('|').Select(y => y.Trim()).ToList();
+
+                                foreach (var filaY in valoresY)
+                                {
+                                    <p class="sub-question-text"><strong>@filaY</strong></p>
+
+                                    <div class="rating-scale likert-scale">
+                                        @{
+                                            var iActual = 0;
+                                        }
+                                        @foreach (var etiquetaX in valoresX)
+                                        {
+                                            var name = $"Likert[{orden}|{filaY}]";
+                                            var id = $"likert-{orden}-{filaY}-{iActual}".Replace(" ", "_");
+
+                                            <label class="rating-item">
+                                                <input type="radio"
+                                                       id="@id"
+                                                       name="@name"
+                                                       value="@iActual"
+                                                       @(Model.PrefillLikert.TryGetValue($"{orden}|{filaY}", out var lv) && lv == iActual ? "checked" : "") />
+                                                <span>@iActual</span>
+                                                <span class="rating-label">@etiquetaX</span>
+                                            </label>
+
+                                            iActual++;
+                                        }
+                                    </div>
+                                }
+
+                                if (preg.FlagComentario)
+                                {
+                                    <p class="sub-question-text">@preg.Comentario</p>
+                                    <div class="text-area-container">
+                                        <textarea maxlength="300"
+                                  class="extrainfo form-control"
+                                  name="LikertComentario[@orden]">@Model.PrefillLikertComentario.GetValueOrDefault(orden)</textarea>
+                                        <div class="char-counter">
+                                            <span class="charcount">00</span>/300
+                                        </div>
+                                    </div>
+                                }
+                            }
+                            else if (preg.TipoPregunta == "Pregunta")
+                            {
+                                <p class="question-text">@($"{orden}. {preg.Pregunta}")</p>
+                                <div class="text-area-container">
+                                    <textarea maxlength="300"
+                                  class="extrainfo form-control"
+                                  name="Texto[@orden]">@Model.PrefillTexto.GetValueOrDefault(orden)</textarea>
+                                    <div class="char-counter">
+                                        <span class="charcount">00</span>/300
+                                    </div>
+                                </div>
+                            }
+                        }
+                    </div>
+
+                    <div class="submit-button-container">
+                        <button type="submit" class="banbif-btn-primario lg" @(Model.Guardando ? "disabled" : "")>
+                            Enviar
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        if (window.loadSurveyStyles) window.loadSurveyStyles();
+
+        function onNpsChanged(orden, rangoMax) {
+            const selected = document.querySelector(`input[name="Respuesta[${orden}]"]:checked`);
+            const wrap = document.getElementById(`nps-comment-wrap-${orden}`);
+            const title = document.getElementById(`nps-comment-title-${orden}`);
+            if (!selected || !wrap || !title) return;
+
+            const valor = parseInt(selected.value, 10);
+            const valorNegativo = Math.floor(rangoMax / 3);
+
+            let tipo = 0;
+            if (valor <= valorNegativo) tipo = 1;
+            else if (valor <= valorNegativo * 2) tipo = 2;
+            else if (valor <= rangoMax) tipo = 3;
+
+            const scale = document.querySelector(`.rating-scale[data-orden="${orden}"]`);
+            if (!scale) return;
+
+            const flag = scale.getAttribute("data-flagcomentario");
+            if (flag !== "1") return;
+
+            const t1 = scale.getAttribute("data-textodetractor") || "";
+            const t2 = scale.getAttribute("data-textoneutro") || "";
+            const t3 = scale.getAttribute("data-textopromotor") || "";
+
+            if (tipo === 1) title.textContent = t1;
+            else if (tipo === 2) title.textContent = t2;
+            else if (tipo === 3) title.textContent = t3;
+            else title.textContent = "";
+
+            wrap.style.display = (tipo === 0) ? "none" : "block";
+        }
+    </script>
+    <script>
+        function pad2(n) { return String(n).padStart(2, "0"); }
+
+        function updateCounter(textarea) {
+          if (!textarea) return;
+
+          const container = textarea.closest(".text-area-container");
+          if (!container) return;
+
+          const counterSpan = container.querySelector(".charcount");
+          if (!counterSpan) return;
+
+          const max = parseInt(textarea.getAttribute("maxlength") || "0", 10);
+          const len = textarea.value?.length ?? 0;
+
+          counterSpan.textContent = pad2(len);
+
+        }
+
+        document.addEventListener("input", (e) => {
+          const t = e.target;
+          if (!(t instanceof HTMLTextAreaElement)) return;
+
+
+          if (t.classList.contains("extrainfo")) updateCounter(t);
+        });
+
+        document.addEventListener("DOMContentLoaded", () => {
+          document.querySelectorAll("textarea.extrainfo").forEach(t => updateCounter(t));
+        });
+
+    </script>
+}

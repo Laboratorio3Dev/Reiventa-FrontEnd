@@ -1,0 +1,238 @@
+
+
+/* =========================================
+   DARK THEME – BackofficeLab
+   wwwroot/css/dark-theme.css
+========================================= */
+
+:root {
+    --bg-dark: #0d1117;
+    --bg-dark-2: #161b22;
+    --text-light: #f8fbff;
+    --muted: #8b97a8;
+    --accent: #3b82f6;
+    --border-light: rgba(255,255,255,0.06);
+}
+
+/* Wrapper general */
+.dark-app {
+    background: var(--bg-dark);
+    min-height: 100vh;
+    color: var(--text-light);
+    padding: 14px;
+}
+
+/* NAVBAR */
+.top-nav {
+    background: linear-gradient(180deg, #161b22, #0f1419);
+    border-radius: 14px;
+    padding: 14px 22px;
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+}
+
+.navbar .nav-link {
+    color: var(--muted);
+    font-weight: 500;
+}
+
+    .navbar .nav-link.active,
+    .navbar .nav-link:hover {
+        color: var(--text-light);
+    }
+
+.navbar-toggler-icon {
+    filter: invert(80%);
+}
+
+/* Dropdown */
+.dropdown-menu {
+    background: var(--bg-dark-2);
+    border: 1px solid var(--border-light);
+}
+
+.dropdown-item {
+    color: var(--text-light);
+}
+
+    .dropdown-item:hover {
+        background: rgba(255,255,255,0.06);
+    }
+
+/* PAGE CARD */
+.page-card {
+    margin-top: 22px;
+    background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius: 14px;
+    padding: 28px;
+    min-height: 72vh;
+    border: 1px solid rgba(255,255,255,0.03);
+    box-shadow: 0 10px 30px rgba(2, 6, 23, 0.6);
+}
+
+    .page-card h1,
+    .page-card h2,
+    .page-card h3 {
+        color: var(--text-light);
+    }
+
+/* Small compact cards */
+.card-compact {
+    background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+    border: 1px solid rgba(255,255,255,0.04);
+    padding: 16px;
+    border-radius: 10px;
+}
+
+/* Buttons */
+.btn-accent {
+    background: linear-gradient(90deg, var(--accent), #66a9ff);
+    border: none;
+    color: #fff;
+}
+
+.btn-outline-light {
+    color: #e6eef8;
+    border-color: rgba(255,255,255,0.06);
+}
+
+/* Text utilities */
+.text-muted-dark {
+    color: var(--muted);
+}
+
+/* Responsive */
+@media (max-width: 991px) {
+    .dark-app {
+        padding: 12px;
+    }
+
+    .top-nav {
+        padding: 10px 14px;
+    }
+
+    .brand-text {
+        font-size: 1rem;
+    }
+
+    .page-card {
+        padding: 18px;
+    }
+}
+
+
+/* ===============================
+   FORM CONTROLS - DARK MODE
+=============================== */
+
+input.form-control,
+select.form-select,
+textarea.form-control {
+    background: #0f141a !important;
+    border: 1px solid rgba(255,255,255,0.08) !important;
+    color: var(--text-light) !important;
+}
+
+    input.form-control::placeholder,
+    textarea.form-control::placeholder {
+        color: rgba(255,255,255,0.35);
+    }
+
+/* Datepicker icon */
+input[type="date"]::-webkit-calendar-picker-indicator {
+    filter: invert(1);
+}
+
+/* Labels */
+.form-label {
+    color: var(--text-light);
+}
+
+/* Filtros container */
+.filtros-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.06);
+    padding: 18px;
+    border-radius: 12px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.4);
+}
+
+/* Título de filtros */
+.filtros-title {
+    background: #005eff;
+    color: white;
+    padding: 10px 18px;
+    border-radius: 10px 10px 0 0;
+}
+
+/* ===============================
+   TABLE DARK
+=============================== */
+
+.table-dark-custom {
+    background: rgba(255,255,255,0.02);
+    color: var(--text-light);
+    border-radius: 10px;
+    overflow: hidden;
+}
+
+    .table-dark-custom thead {
+        background: rgba(255,255,255,0.05);
+    }
+
+    .table-dark-custom th {
+        color: #dbe9ff;
+        padding: 12px;
+    }
+
+    .table-dark-custom td {
+        color: #f0f4ff;
+        background: rgba(255,255,255,0.015);
+        border-bottom: 1px solid rgba(255,255,255,0.05);
+        padding: 10px;
+    }
+
+    /* Hover suave */
+    .table-dark-custom tbody tr:hover {
+        background: rgba(255,255,255,0.05);
+    }
+
+
+/* Buttons consistent with dark theme */
+.btn-primary {
+    background: linear-gradient(90deg, #0d6efd, #3b82f6);
+    border: none;
+}
+
+.btn-success {
+    background: linear-gradient(90deg, #198754, #2ecc71);
+}
+
+.btn-light, .btn-outline-light {
+    background: rgba(255,255,255,0.12);
+    color: white;
+    border: 1px solid rgba(255,255,255,0.2);
+}
+
+/* ===============================
+   MODAL DARK
+=============================== */
+
+.modal-content {
+    background: #161b22 !important;
+    color: var(--text-light);
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 6px 40px rgba(0,0,0,0.6);
+}
+
+.modal-header {
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+}
+
+.modal-footer {
+    border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.modal-title {
+    color: var(--text-light);
+}
