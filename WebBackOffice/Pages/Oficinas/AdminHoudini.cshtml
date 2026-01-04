@@ -1,0 +1,418 @@
+﻿@page
+@model WebBackOffice.Pages.Oficinas.AdminHoudiniModel
+
+
+@{
+    ViewData["Title"] = "Admin Houdini";
+}
+
+<div class="container-fluid px-4 py-3">
+
+    <!-- HEADER -->
+    <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
+        <h3 class="fw-bold text-purple mb-0">
+            <i class="bi bi-clipboard-check me-2"></i> Admin Houdini
+        </h3>
+    </div>
+
+    <!-- FILTROS -->
+    <form method="get">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Filtros de búsqueda</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3 mb-2">
+
+                    <div class="col-12 col-sm-6 col-md-3">
+                        <label class="form-label">Buscar por nombre</label>
+                        <input class="form-control"
+                               asp-for="SearchTerm"
+                               placeholder="Ingrese nombre..." />
+                    </div>
+
+                    <div class="col-md-6 col-sm-12 d-flex align-items-end gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            Buscar
+                        </button>
+
+                        <a asp-page="./AdminHoudini"
+                           class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Limpiar filtros
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <button class="btn btn-primary" onclick="nuevoProducto()">
+        <i class="bi bi-plus-circle"></i> Nuevo Producto
+    </button>
+    <br />
+
+    <!-- LISTADO -->
+    @if (Model.PagedProductos == null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary"></div>
+            <div class="mt-2 text-muted">Cargando productos...</div>
+        </div>
+    }
+    else if (!Model.PagedProductos.Any())
+    {
+        <div class="alert alert-warning text-center">
+            No se encontraron productos.
+        </div>
+    }
+    else
+    {
+        <div class="table-view">
+            <div class="table-responsive-custom">
+                <table class="custom-table">
+                    <thead >
+                        <tr class="text-center">
+                            <th>Título</th>
+                            <th>Sub Título</th>
+                            <th>Asunto</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var e in Model.PagedProductos)
+                        {
+                            <tr class="text-center">
+                                <td>@e.Titulo</td>
+                                <td>@e.SubTitulo</td>
+                                <td>@e.Asunto</td>
+                                <td>
+                                    <a class="btn btn-sm btn-outline-primary">
+                                        Editar
+                                    </a>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+       </div>
+
+        <!-- PAGINACIÓN -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <a class="btn btn-outline-secondary @(Model.CanGoPrevious ? "" : "disabled")"
+               asp-route-pageNumber="@(Model.CurrentPage - 1)">
+                Anterior
+            </a>
+
+            <span>Página @Model.CurrentPage de @Model.TotalPages</span>
+
+            <a class="btn btn-outline-secondary @(Model.CanGoNext ? "" : "disabled")"
+               asp-route-pageNumber="@(Model.CurrentPage + 1)">
+                Siguiente
+            </a>
+        </div>
+    }
+</div>
+
+
+<!-- ================= MODAL ================= -->
+<!-- MODAL PRODUCTO -->
+<div  class="modal fade" id="modalProducto" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title" id="modalTitulo">Nuevo Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+
+                <!-- FORM NECESARIO -->
+                <form id="frmProducto" method="post">
+                    @Html.AntiForgeryToken()
+
+                    <input type="hidden" id="productoId" name="IdProducto" />
+
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label for="titulo">Título</label>
+                            <input id="titulo" class="form-control required"  />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Sub Título</label>
+                            <input id="subTitulo" name="SubTitulo" class="form-control required" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Asunto</label>
+                            <input id="asunto" name="Asunto" class="form-control required" required />
+                        </div>
+
+                        <div class="col-md-6">
+                            <label>Orden</label>
+                            <select id="orden" name="Orden" class="form-select required" required>
+                                <option value="">Seleccione</option>
+                                <option value="1">1</option>
+                                <option value="2">2</option>
+                                <option value="3">3</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+
+                <!-- MENSAJE -->
+                <div id="mensajeModal" class="mt-3"></div>
+            </div>
+
+            <div class="modal-footer">
+                <button class="btn btn-secondary" data-bs-dismiss="modal">
+                    Cerrar
+                </button>
+                <button class="btn btn-primary" type="button" onclick="guardarProducto()">
+                    Guardar
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+
+<script>
+    let modalProducto;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        modalProducto = new bootstrap.Modal(
+            document.getElementById('modalProducto')
+        );
+    });
+
+    function nuevoProducto() {
+        document.getElementById('modalTitulo').innerText = 'Nuevo Producto';
+
+        document.getElementById('productoId').value = '';
+        document.getElementById('titulo').value = '';
+        document.getElementById('subTitulo').value = '';
+        document.getElementById('asunto').value = '';
+        document.getElementById('orden').value = '';
+
+
+
+
+        modalProducto.show();
+    }
+
+    function editarProducto(id, titulo, subTitulo, asunto, orden) {
+        document.getElementById('modalTitulo').innerText = 'Editar Producto';
+
+        document.getElementById('productoId').value = id;
+        document.getElementById('titulo').value = titulo;
+        document.getElementById('subTitulo').value = subTitulo;
+        document.getElementById('asunto').value = asunto;
+        document.getElementById('orden').value = orden;
+
+        modalProducto.show();
+    }
+
+
+      function guardarProducto() {
+          debugger;
+       // if (!validarFormularioProducto()) return;
+        if (!ValidarFormulario("modalProducto")) {
+                  return;
+         }
+
+        const form = document.getElementById('frmProducto');
+        const formData = new FormData(form);
+
+        fetch('?handler=GuardarProducto', {
+            method: 'POST',
+            body: formData
+        })
+        .then(r => r.json())
+        .then(data => {
+           // 🔥 MENSAJE DEL BACK
+        mostrarMensaje(data.message, data.isSuccess ? 'success' : 'danger');
+
+        if (data.isSuccess) {
+            setTimeout(() => {
+                window.location.reload();
+            }, 1200);
+        }
+        })
+        .catch(err => {
+            console.error(err);
+            mostrarMensaje('Error inesperado');
+        });
+    }
+
+
+     function mostrarMensaje(texto, tipo) {
+         document.getElementById('mensajeModal').innerHTML =
+             `<div class="alert alert-${tipo}">${texto}</div>`;
+     }
+
+       function validarFormularioProducto() {
+
+        const campos = [
+            { id: 'titulo', nombre: 'Título' },
+            { id: 'subTitulo', nombre: 'Sub Título' },
+            { id: 'asunto', nombre: 'Asunto' },
+            { id: 'orden', nombre: 'Orden' }
+        ];
+
+        let valido = true;
+        let mensajes = [];
+
+        campos.forEach(c => {
+            const el = document.getElementById(c.id);
+
+            if (!el.value || el.value.trim() === '') {
+                el.classList.add('is-invalid');
+                mensajes.push(`El campo ${c.nombre} es obligatorio`);
+                valido = false;
+            }
+        });
+
+        if (!valido) {
+            mostrarMensaje(mensajes[0], 'danger'); // ✔ solo uno
+        }
+
+        return valido;
+    }
+
+        function ValidarFormulario(form) {
+
+        var MsjObligatorio = "<small class='form-text text-muted field-validation-error'>Campo {0} obligatorio</small>";
+        var validacion = true;
+        $(".form-text").remove();
+        $("#" + form + " .form-control").removeClass("hasError");
+        $("#" + form + " .custom-file").removeClass("hasError");
+        $("#" + form + " div").removeClass("hasError");
+        $("#" + form + " .select2-selection").removeClass("hasError");
+        $("#" + form + " .custom-file-label").removeClass("hasError");
+        $("#" + form + " .cam-peoplepicker-userlookup").removeClass("hasError");
+        $("#" + form + " input").removeClass("hasErrorCheckBox");
+        $("#" + form + " div").removeClass("is-invalid");
+        $("#" + form + " .required").each(function () {
+            if ($(this).is(":visible")) {
+                if (this.type == "checkbox") {
+                    if (!$(this).prop('checked')) {
+                        $(this).addClass("hasErrorCheckBox");
+                        validacion = false;
+                    }
+                } else if (this.localName == "input" || this.localName == "select" || this.localName == "textarea") {
+                    if ($(this).val() == "" || $(this).val() == "0" || $(this).val() == "-1" || $(this).val() == "[]" || $(this).val() == null) {
+                        if ($(this).hasClass("reference")) {
+                            var reference = this.className.split("ref_")[1];
+                            var objreference = $("#" + reference);
+                            if (objreference[0].type == "checkbox") {
+                                if ($(this).hasClass("controlSiNo")) {
+                                    if (objreference.prop('checked')) {
+                                        $(this.parentElement).addClass("hasError");
+                                        validacion = false;
+                                    }
+                                } else {
+                                    if (!objreference.prop('checked')) {
+                                        $(this).addClass("hasError");
+                                        validacion = false;
+                                    }
+                                }
+                            } else {
+                                objreference.addClass("hasError");
+                                validacion = false;
+                            }
+                        } else {
+                            if ($(this).hasClass("selectpicker")) {
+                                $(this).parent().addClass("is-invalid");
+                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                                $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                                validacion = false;
+                            } else if ($(this).hasClass("custom-file-input")) {
+                                $(this).parent().find(".custom-file-label").addClass("hasError");
+                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                                $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                                validacion = false;
+                            } else if ($(this).parent().hasClass("date")) {
+                                $(this).addClass("hasError");
+                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                                $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                                validacion = false;
+                            } else if ($(this).hasClass("selectMultiple")) {
+                                var id = $(this).attr("id");
+                                if ($("#" + id + ">option").length <= 0) {
+                                    $(this).addClass("hasError");
+                                    var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                                    $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                                    validacion = false;
+                                }
+                            } else {
+                                $(this).addClass("hasError");
+                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                                $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                                validacion = false;
+                            }
+                        }
+                    } else {
+                        if ($(this).attr("minlength") != undefined && $(this).attr("minlength") != null) {
+                            if ($(this).val().length < $(this).attr("minlength")) {
+                                $(this).addClass("hasError");
+                                validacion = false;
+                            }
+                        }
+                    }
+                } else if (this.localName == "p") {
+                    if ($(this).html() == "") {
+                        $(this).addClass("hasError");
+                        validacion = false;
+                    }
+                } else if (this.localName == "table") {
+                    var tableid = $(this).attr("id");
+                    if ($("#" + tableid + " tbody").html().indexOf("No se encontraron resultados") != -1) {
+                        $(this).parent().parent().addClass("hasError");
+                        validacion = false;
+                    }
+                }
+            } else {
+                if (this.type == "hidden") {
+                    if ($(this).val() == "" || $(this).val() == "0" || $(this).val() == "-1" || $(this).val() == "[]") {
+                        if ($(this).hasClass("reference")) {
+                            var reference = this.className.split("ref_")[1];
+                            var objreference = $("#" + reference);
+                            if (objreference[0].type == "checkbox") {
+                                if ($(this).hasClass("controlSiNo")) {
+                                    if (objreference.prop('checked')) {
+                                        $(this.parentElement).addClass("hasError");
+                                        validacion = false;
+                                    }
+                                } else {
+                                    if (!objreference.prop('checked')) {
+                                        $(this).addClass("hasError");
+                                        validacion = false;
+                                    }
+                                }
+                            } else {
+                                objreference.parent().addClass("hasError");
+                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                                objreference.parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                                validacion = false;
+                            }
+                        } else if ($(this).hasClass("cam-peoplepicker-inputvalue")) {
+                            $(this).parent().find(".cam-peoplepicker-userlookup").addClass("hasError");
+                            var Label = "";
+                            $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                            validacion = false;
+                        }
+                    }
+                }
+            }
+        });
+
+        return validacion;
+    }
+</script>
+
