@@ -1,0 +1,952 @@
+﻿@page "/Encuestas/NPS"
+@model WebBackOffice.Pages.NPS.Encuesta.IndiceEncuestaModel
+
+@using WebBackOffice.DTO.NPS;
+@using System.Text.Json
+
+@{
+    ViewData["Title"] = "Encuestas";
+}
+
+<div class="container mt-4">
+    <h2 class="mb-4 text-primary fw-bold">
+        <i class="bi bi-clipboard-check me-2"></i> Encuestas
+    </h2>
+
+    <!-- Barra de herramientas -->
+    <div class="card-body d-flex flex-wrap gap-2">
+
+        <div class="card shadow-sm mb-4 w-100">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">Filtros de búsqueda</h5>
+            </div>
+
+            <div class="card-body">
+                <!-- En Razor: filtros por GET -->
+                <form method="get">
+                    <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                    <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                    <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                    <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                    <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                    <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                    <div class="row g-3">
+
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Buscar por nombre</label>
+                            <input type="text" class="form-control" placeholder="Ingrese nombre..."
+                                   name="SearchTerm" value="@Model.SearchTerm" />
+                        </div>
+
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Tipo de Persona</label>
+                            <select class="form-select" name="SelectedTipoPersona">
+                                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SelectedTipoPersona))">Todos</option>
+                                <option value="Natural" selected="@(Model.SelectedTipoPersona == "Natural")">Persona Natural</option>
+                                <option value="Jurídica" selected="@(Model.SelectedTipoPersona == "Jurídica")">Persona Jurídica</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Fecha Inicio</label>
+                            <input type="date" class="form-control"
+                                   name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                        </div>
+
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Fecha Fin</label>
+                            <input type="date" class="form-control"
+                                   name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                        </div>
+
+                        <div class="col-md-3 col-sm-6">
+                            <label class="form-label">Estado</label>
+                            <select class="form-select" name="SelectedEstado">
+                                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.SelectedEstado))">Todos</option>
+                                <option value="En curso" selected="@(Model.SelectedEstado == "En curso")">En curso</option>
+                                <option value="Cerrada" selected="@(Model.SelectedEstado == "Cerrada")">Cerrada</option>
+                            </select>
+                        </div>
+
+                        <div class="col-md-6 col-sm-12 d-flex align-items-end gap-2">
+                            <a class="btn btn-outline-secondary" href="/Encuestas/NPS">
+                                <i class="bi bi-x-circle me-1"></i> Limpiar filtros
+                            </a>
+
+                            <!-- Exportar Excel (tu método en Blazor era placeholder, acá lo dejamos como handler) -->
+                            <form method="post" class="m-0">
+
+                                <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                @if (Model.formModel.FlagBase && !Model.EsSoloLectura)
+                                {
+                                    <button class="btn btn-outline-success" type="submit" formaction="?handler=ExportarBaseCargada">
+                                        <i class="bi bi-file-earmark-excel me-1"></i> Exportar base cargada
+                                    </button>
+                                }
+                            </form>
+
+                            <button class="btn btn-primary" type="submit">
+                                Filtrar
+                            </button>
+                        </div>
+
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Nueva Encuesta -->
+        <form method="post" class="m-0">
+            <input type="hidden" name="currentPage" value="@Model.currentPage" />
+            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+            <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+            <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+            <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+            <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+            <button class="btn btn-primary" type="submit" formaction="?handler=NuevaEncuesta">
+                <i class="bi bi-plus-circle me-1"></i> Nueva Encuesta
+            </button>
+        </form>
+    </div>
+
+    <!-- Estado de carga / sin datos -->
+    @if (Model.pagedEncuestas is null)
+    {
+        <div class="text-center my-5">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2 text-muted">Cargando encuestas...</div>
+        </div>
+    }
+    else if (!Model.pagedEncuestas.Any())
+    {
+        <div class="alert alert-warning text-center shadow-sm">
+            <i class="bi bi-exclamation-circle me-2"></i> No se encontraron encuestas.
+        </div>
+    }
+    else
+    {
+        <!-- Tabla desktop -->
+        <div class="table-responsive shadow rounded-3 overflow-hidden d-none d-md-block" style="max-height: 600px;">
+            <table class="table table-striped align-middle mb-0">
+                <thead class="bg-gradient-primary text-white sticky-top">
+                    <tr class="text-center">
+                        <th>Nombre</th>
+                        <th>Tipo Persona</th>
+                        <th>Tipo Encuesta</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Fin</th>
+                        <th>Respuestas</th>
+                        <th>Estado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+
+                <tbody class="table-group-divider">
+                    @foreach (var e in Model.pagedEncuestas)
+                    {
+                        <tr class="text-center">
+                            <td class="fw-semibold text-dark">@e.NombreEncuesta</td>
+                            <td>@e.TipoPersona</td>
+                            <td>@e.TipoEncuesta</td>
+                            <td>@(e.FechaInicio?.ToString("dd/MM/yyyy"))</td>
+                            <td>@(e.FechaFin?.ToString("dd/MM/yyyy"))</td>
+                            <td>@e.CantidadRespuestas</td>
+                            <td>
+                                @if (e.Estado == "En curso")
+                                {
+                                    <span class="badge bg-success rounded-pill px-3 py-2">@e.Estado</span>
+                                }
+                                else
+                                {
+
+                                    <span class="badge bg-secondary rounded-pill px-3 py-2">@e.Estado</span>
+                                }
+                            </td>
+
+                            <td>
+                                <div class="d-flex justify-content-center gap-2">
+
+                                    @if (e.Estado == "En curso")
+                                    {
+                                        <form method="post" class="m-0">
+                                            <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                            <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                            <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                            <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                            <button class="btn btn-sm btn-outline-warning" title="Editar"
+                                                    type="submit" formaction="?handler=EditarEncuesta">
+                                                <i class="bi bi-pencil-square"></i>
+                                            </button>
+                                        </form>
+                                    }
+                                    else
+                                    {
+                                        <form method="post" class="m-0">
+                                            <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                            <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                            <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                            <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                            <button class="btn btn-sm btn-outline-primary" title="Ver"
+                                                    type="submit" formaction="?handler=VerDetalles">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        </form>
+                                    }
+
+                                    @if (e.CantidadRespuestas > 0)
+                                    {
+                                        <form method="post" class="m-0">
+                                            <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                            <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                            <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                            <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                            <button class="btn btn-sm btn-outline-success" title="Descargar respuestas"
+                                                    type="submit" formaction="?handler=DescargarRespuestas">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                        </form>
+                                    }
+
+                                    @if (e.TipoEncuesta?.Contains("Base", StringComparison.OrdinalIgnoreCase) == true)
+                                    {
+                                        <form method="post" class="m-0">
+                                            <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                            <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                            <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                            <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                            <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                            <button class="btn btn-outline-success btn-sm" title="Descargar Base"
+                                                    type="submit" formaction="?handler=DescargarBase">
+                                                <i class="bi bi-download"></i>
+                                            </button>
+                                        </form>
+                                    }
+
+                                    <form method="post" class="m-0">
+                                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                        <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                        <button class="btn btn-sm btn-outline-dark" title="Generar QR"
+                                                type="submit" formaction="?handler=GenerarQR">
+                                            <i class="bi bi-qr-code"></i>
+                                        </button>
+                                    </form>
+
+                                    <!-- Copiar link: lo hacemos con JS directo para no postear -->
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" title="Copiar link"
+                                            onclick="copyToClipboard('@(e.Link ?? "")'); alert('Link copiado al portapapeles');">
+                                        <i class="bi bi-link-45deg"></i>
+                                    </button>
+
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Cards mobile (mantenido) -->
+        <div class="d-block d-md-none">
+            <div class="row g-3">
+                @foreach (var e in Model.pagedEncuestas)
+                {
+                    <div class="col-12">
+                        <div class="card shadow-sm border-0 rounded-3">
+                            <div class="card-body">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <h5 class="card-title text-primary fw-bold mb-2">
+                                        <i class="bi bi-clipboard me-2"></i> @e.NombreEncuesta
+                                    </h5>
+
+                                    <div class="dropdown">
+                                        <button class="btn btn-light btn-sm rounded-circle shadow-sm" type="button"
+                                                data-bs-toggle="dropdown" aria-expanded="false">
+                                            <i class="bi bi-three-dots-vertical"></i>
+                                        </button>
+
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            @if (e.Estado == "En curso")
+                                            {
+                                                <li>
+                                                    <form method="post" class="m-0">
+                                                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                                        <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                                        <button type="submit" class="dropdown-item" formaction="?handler=EditarEncuesta">
+                                                            <i class="bi bi-pencil-square me-2 text-warning"></i> Editar
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            }
+                                            else
+                                            {
+                                                <li>
+                                                    <form method="post" class="m-0">
+                                                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                                        <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                                        <button type="submit" class="dropdown-item" formaction="?handler=VerDetalles">
+                                                            <i class="bi bi-eye me-2 text-primary"></i> Ver
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            }
+
+                                            @if (e.CantidadRespuestas > 0)
+                                            {
+                                                <li>
+                                                    <form method="post" class="m-0">
+                                                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                                                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                                                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                                                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                                                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                                                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                                                        <input type="hidden" name="IdEncuesta" value="@e.IdEncuesta" />
+                                                        <button type="submit" class="dropdown-item" formaction="?handler=DescargarRespuestas">
+                                                            <i class="bi bi-download me-2 text-success"></i> Descargar respuestas
+                                                        </button>
+                                                    </form>
+                                                </li>
+                                            }
+
+                                            <li>
+                                                <button type="button" class="dropdown-item"
+                                                        onclick="copyToClipboard('@(e.Link ?? "")'); alert('Link copiado al portapapeles');">
+                                                    <i class="bi bi-link-45deg me-2 text-secondary"></i> Copiar link
+                                                </button>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <p class="mb-1"><strong>Tipo Persona:</strong> @e.TipoPersona</p>
+                                <p class="mb-1"><strong>Tipo Encuesta:</strong> @e.TipoEncuesta</p>
+                                <p class="mb-1"><strong>Fecha Inicio:</strong> @(e.FechaInicio?.ToString("dd/MM/yyyy"))</p>
+                                <p class="mb-1"><strong>Fecha Fin:</strong> @(e.FechaFin?.ToString("dd/MM/yyyy"))</p>
+                                <p class="mb-1"><strong>Respuestas:</strong> @e.CantidadRespuestas</p>
+                                <p class="mb-0">
+                                    <strong>Estado:</strong>
+                                    @if (e.Estado == "En curso")
+                                    {
+                                        <span class="badge bg-success rounded-pill px-2 py-1">@e.Estado</span>
+                                    }
+                                    else
+                                    {
+
+                                        <span class="badge bg-secondary rounded-pill px-2 py-1">@e.Estado</span>
+                                    }
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Paginación (GET) -->
+        <div class="d-flex justify-content-between align-items-center mt-3">
+            <a class="btn btn-outline-secondary @(Model.CanGoPrevious ? "" : "disabled")"
+               href="@Model.PageUrl(Model.currentPage - 1)">
+                <i class="bi bi-chevron-left"></i> Anterior
+            </a>
+
+            <span class="fw-semibold">Página @Model.currentPage de @Model.totalPages</span>
+
+            <a class="btn btn-outline-secondary @(Model.CanGoNext ? "" : "disabled")"
+               href="@Model.PageUrl(Model.currentPage + 1)">
+                Siguiente <i class="bi bi-chevron-right"></i>
+            </a>
+        </div>
+    }
+</div>
+
+<!-- Modal Encuesta -->
+@if (Model.mostrarModal && Model.formModel is not null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+
+                <!-- ✅ UN SOLO FORM (sin forms anidados) -->
+                <form id="frmEncuesta" method="post" enctype="multipart/form-data">
+                    <input type="hidden" id="IdPregunta" name="TempId" value="" />
+                    <input type="hidden" name="formModel.IdEncuesta" value="@Model.formModel.IdEncuesta" />
+                    <div class="modal-header bg-primary text-white rounded-top">
+                        <h5 class="modal-title">
+                            @(Model.modoModal == "editar" ? "Editar Encuesta" : "Nueva Encuesta")
+                        </h5>
+
+                        <!-- ✅ Cerrar sin form interno -->
+                        <button type="submit"
+                                class="btn-close btn-close-black"
+                                aria-label="Close"
+                                formaction="?handler=CerrarModal">
+                        </button>
+                    </div>
+
+                    <div class="modal-body bg-light">
+
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="fw-semibold">Nombre</label>
+                                <input class="form-control"
+                                       name="formModel.NombreEncuesta"
+                                       value="@Model.formModel.NombreEncuesta"
+                                       @(Model.EncuestaConRespuestas ? "disabled" : (Model.EsSoloLectura ? "disabled" : "")) />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="fw-semibold">Título Encuesta</label>
+                                <input class="form-control"
+                                       name="formModel.TituloEncuesta"
+                                       value="@Model.formModel.TituloEncuesta"
+                                       @(Model.EncuestaConRespuestas ? "disabled" : (Model.EsSoloLectura ? "disabled" : "")) />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="fw-semibold">Tipo Persona</label>
+                                <select class="form-select"
+                                        name="formModel.TipoPersona"
+                                        @(Model.EncuestaConRespuestas ? "disabled" : (Model.EsSoloLectura ? "disabled" : ""))>
+                                    <option value="">Seleccione...</option>
+                                    <option value="Natural" selected="@(Model.formModel.TipoPersona == "Natural")">Persona Natural</option>
+                                    <option value="Jurídica" selected="@(Model.formModel.TipoPersona == "Jurídica")">Persona Jurídica</option>
+                                </select>
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="fw-semibold">Fecha Inicio</label>
+                                <input type="date" class="form-control"
+                                       name="formModel.FechaInicio"
+                                       value="@(Model.formModel.FechaInicio?.ToString("yyyy-MM-dd"))"
+                                       @(Model.EncuestaConRespuestas ? "disabled" : (Model.EsSoloLectura ? "disabled" : "")) />
+                            </div>
+
+                            <div class="col-md-6">
+                                <label class="fw-semibold">Fecha Fin</label>
+                                <input type="date" class="form-control"
+                                       name="formModel.FechaFin"
+                                       value="@(Model.formModel.FechaFin?.ToString("yyyy-MM-dd"))"
+                                       @(Model.EsSoloLectura ? "disabled" : "") />
+                            </div>
+
+                            @{
+                                var disableLogin = Model.EncuestaConRespuestas || Model.EsSoloLectura;
+                            }
+
+                            <div class="col-md-4 form-check form-switch">
+                                <!-- Siempre manda algo -->
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="chkLogin"
+                                       name="formModel.FlagLogin"
+                                       value="true"
+                                       @(Model.formModel.FlagLogin ? "checked" : "") />
+
+                                <input type="hidden" name="formModel.FlagLogin" value="false" />
+                                <label class="form-check-label" for="switchLogin">Usa Login</label>
+                            </div>
+
+                            @{
+                                var disableBase = Model.EsSoloLectura;
+                            }
+
+                            <div class="col-md-4 form-check form-switch">
+                                <!-- Siempre manda algo -->
+                                <input type="checkbox"
+                                       class="form-check-input"
+                                       id="chkBase"
+                                       name="formModel.FlagBase"
+                                       value="true"
+                                       @(Model.formModel.FlagBase ? "checked" : "") />
+
+                                <input type="hidden" name="formModel.FlagBase" value="false" />
+                                <label class="form-check-label" for="switchBase">Base</label>
+                            </div>
+
+                            <div class="col-md-4 form-check form-switch" style="display:none">
+                                <input type="hidden" name="formModel.FlagAnalisis" value="false" />
+                                <input class="form-check-input" type="checkbox" id="switchAnalisis"
+                                       name="formModel.FlagAnalisis" value="true"
+                                       @(Model.formModel.FlagAnalisis ? "checked" : "")
+                                       @(Model.EsSoloLectura ? "disabled" : "") />
+                                <label class="form-check-label" for="switchAnalisis">Análisis</label>
+                            </div>
+                        </div>
+
+                        <div id="loginImageContainer" class="mb-3" style="display:none">
+                            <label class="form-label">Imagen para Login</label>
+                            <input type="file"
+                                   class="form-control"
+                                   name="LoginImage"
+                                   accept="image/*" />
+                        </div>
+
+                        <div id="baseFileContainer" class="mb-3" style="display:none">
+                            <label class="form-label">Archivo Base (Excel/CSV)</label>
+                            <input type="file"
+                                   class="form-control"
+                                   name="BaseFile"
+                                   accept=".xlsx,.csv" />
+                        </div>
+
+                        <div class="mt-4">
+
+                            @if (!Model.EncuestaConRespuestas && !Model.EsSoloLectura)
+                            {
+                                <!-- ✅ Crear Pregunta: MISMO form -->
+                                <button class="btn btn-sm btn-success" type="submit" formaction="?handler=AbrirModalPregunta">
+                                    <i class="bi bi-plus-circle me-1"></i> Crear Pregunta
+                                </button>
+                            }
+
+                            @if (Model.preguntasDisponibles.Any())
+                            {
+                                <div class="table-responsive mt-3" style="max-height: 250px; overflow-y: auto;">
+                                    <table class="table table-sm table-hover align-middle">
+                                        <thead class="table-primary">
+                                            <tr>
+                                                <th>Pregunta</th>
+                                                <th>Tipo</th>
+                                                @if (!Model.EncuestaConRespuestas && !Model.EsSoloLectura)
+                                                {
+                                                    <th class="text-center">Acciones</th>
+                                                }
+                                            </tr>
+                                        </thead>
+
+                                        <tbody>
+                                            @foreach (var p in Model.preguntasDisponibles)
+                                            {
+                                                <tr>
+                                                    <td>@p.Texto</td>
+                                                    <td>@p.Tipo</td>
+
+                                                    @if (!Model.EncuestaConRespuestas && !Model.EsSoloLectura)
+                                                    {
+                                                        <td class="text-center">
+                                                            <div class="d-flex justify-content-center gap-2">
+
+                                                                <button class="btn btn-sm btn-outline-warning"
+                                                                        title="Editar"
+                                                                        type="submit"
+                                                                        formaction="?handler=EditarPregunta"
+                                                                        onclick="setIdPregunta(@p.TempId);">
+                                                                    <i class="bi bi-pencil"></i>
+                                                                </button>
+
+                                                                <button class="btn btn-sm btn-outline-danger"
+                                                                        title="Eliminar"
+                                                                        type="submit"
+                                                                        formaction="?handler=EliminarPregunta"
+                                                                        onclick="return confirmDelete(@p.TempId);">
+                                                                    <i class="bi bi-trash"></i>
+                                                                </button>
+
+                                                            </div>
+                                                        </td>
+                                                    }
+                                                </tr>
+                                            }
+                                        </tbody>
+                                    </table>
+                                </div>
+                            }
+                        </div>
+
+                    </div>
+
+                    <div class="modal-footer border-top-0">
+                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                        @if (Model.EsSoloLectura)
+                        {
+                            <button class="btn btn-info" type="submit" formaction="?handler=AbrirEstadisticas">
+                                <i class="bi bi-bar-chart-line me-1"></i> Ver Estadísticas
+                            </button>
+                        }
+
+                        <button class="btn btn-outline-secondary" type="submit" formaction="?handler=CerrarModal">
+                            <i class="bi bi-x-circle me-1"></i> Cerrar
+                        </button>
+
+                        @if (!Model.EsSoloLectura)
+                        {
+                            <button class="btn btn-primary" type="submit" formaction="?handler=GuardarEncuesta">
+                                <i class="bi bi-save me-1"></i> Guardar
+                            </button>
+                        }
+
+                        @if (!Model.EsSoloLectura && Model.preguntasDisponibles.Any())
+                        {
+                            <button class="btn btn-warning" type="submit" formaction="?handler=AbrirVistaPrevia">
+                                <i class="bi bi-eye me-1"></i> Vista Previa
+                            </button>
+                        }
+                    </div>
+
+                </form>
+
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal Crear Pregunta -->
+@if (Model.mostrarModalPregunta)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+
+                <form method="post">
+                    <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                    <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                    <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                    <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                    <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                    <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                    <div class="modal-header bg-success text-white rounded-top">
+                        <h5 class="modal-title">
+                            <i class="bi @(Model.esEdicionPregunta ? "bi-pencil-square" : "bi-plus-circle") me-2"></i>
+                            @(Model.esEdicionPregunta ? "Editar Pregunta" : "Nueva Pregunta")
+                        </h5>
+
+                        <button type="submit"
+                                class="btn-close btn-close-white"
+                                formaction="?handler=CerrarModalPregunta">
+                        </button>
+                    </div>
+
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="fw-semibold">Texto de la pregunta</label>
+                            <input class="form-control" name="nuevaPreguntaTexto" value="@Model.nuevaPreguntaTexto" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="fw-semibold">Tipo de Pregunta</label>
+                            <select class="form-select"
+                                    name="nuevaPreguntaTipo"
+                                    onchange="this.form.action='?handler=CambioTipoPregunta'; this.form.submit();">
+                                <option value="" selected="@(string.IsNullOrWhiteSpace(Model.nuevaPreguntaTipo))">Seleccione...</option>
+                                <option value="Escala Numérica" selected="@(Model.nuevaPreguntaTipo == "Escala Numérica")">Escala Numérica</option>
+                                <option value="Escala de Likert" selected="@(Model.nuevaPreguntaTipo == "Escala de Likert")">Escala de Likert</option>
+                                <option value="Pregunta" selected="@(Model.nuevaPreguntaTipo == "Pregunta")">Pregunta</option>
+                            </select>
+                        </div>
+
+                        @if (Model.nuevaPreguntaTipo == "Escala Numérica")
+                        {
+                            <div class="row">
+                                <div class="col">
+                                    <label>Rango Mínimo</label>
+                                    <input type="number" class="form-control" name="rangoMinimo" value="@Model.rangoMinimo" />
+                                </div>
+                                <div class="col">
+                                    <label>Rango Máximo</label>
+                                    <input type="number" class="form-control" name="rangoMaximo" value="@Model.rangoMaximo" />
+                                </div>
+                            </div>
+
+                            <div class="mb-3 mt-3">
+                                <label class="fw-semibold">Texto Detractor</label>
+                                <textarea class="form-control" name="textoDetractor" rows="1">@Model.textoDetractor</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-semibold">Texto Neutro</label>
+                                <textarea class="form-control" name="textoNeutro" rows="1">@Model.textoNeutro</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-semibold">Texto Promotor</label>
+                                <textarea class="form-control" name="textoPromotor" rows="1">@Model.textoPromotor</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-semibold">Texto Valor Mínimo</label>
+                                <textarea class="form-control" name="textoValorMinimo" rows="1">@Model.textoValorMinimo</textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label class="fw-semibold">Texto Valor Máximo</label>
+                                <textarea class="form-control" name="textoValorMaximo" rows="1">@Model.textoValorMaximo</textarea>
+                            </div>
+                        }
+
+                        @if (Model.nuevaPreguntaTipo == "Escala de Likert")
+                        {
+                            <div class="mb-3">
+                                <label class="fw-semibold">Afirmaciones / Preguntas</label>
+                                <div class="input-group mb-2">
+                                    <input class="form-control" name="nuevaRespuestaLikert" value="@Model.nuevaRespuestaLikert"
+                                           placeholder="Escribe una respuesta" />
+                                    <button class="btn btn-primary" type="submit" formaction="?handler=AgregarRespuestaLikert">Agregar</button>
+                                </div>
+
+                                <ul class="list-group">
+                                    @foreach (var resp in Model.respuestasLikert)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            @resp
+                                            <button class="btn btn-sm btn-outline-danger" type="submit"
+                                                    name="valor" value="@resp" formaction="?handler=EliminarRespuestaLikert">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+
+                            <div class="mb-3 mt-3">
+                                <label class="fw-semibold">Posibles Respuestas</label>
+                                <div class="input-group mb-2">
+                                    <input class="form-control" name="nuevaAfirmacion" value="@Model.nuevaAfirmacion"
+                                           placeholder="Escribe una afirmación" />
+                                    <button class="btn btn-primary" type="submit" formaction="?handler=AgregarAfirmacion">Agregar</button>
+                                </div>
+
+                                <ul class="list-group">
+                                    @foreach (var af in Model.afirmaciones)
+                                    {
+                                        <li class="list-group-item d-flex justify-content-between align-items-center">
+                                            @af
+                                            <button class="btn btn-sm btn-outline-danger" type="submit"
+                                                    name="valor" value="@af" formaction="?handler=EliminarAfirmacion">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </li>
+                                    }
+                                </ul>
+                            </div>
+                        }
+
+                        @if (Model.nuevaPreguntaTipo == "Pregunta")
+                        {
+                            <div class="mb-3" style="display:none">
+                                <label class="fw-semibold">Respuesta esperada (opcional)</label>
+                                <textarea class="form-control" name="respuestaPreguntaSimple" rows="3">@Model.respuestaPreguntaSimple</textarea>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="modal-footer">
+                        <button class="btn btn-outline-secondary" type="submit" formaction="?handler=CerrarModalPregunta">
+                            Cancelar
+                        </button>
+
+                        <button class="btn btn-success" type="submit" formaction="?handler=GuardarPregunta">
+                            <i class="bi bi-save me-1"></i> Guardar
+                        </button>
+                    </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+}
+
+<!-- Modal de estadísticas -->
+@if (Model.mostrarModalEstadisticas)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content border-0 shadow-lg rounded-4">
+
+                <div class="modal-header bg-info text-white rounded-top">
+                    <h5 class="modal-title">
+                        <i class="bi bi-bar-chart-line me-2"></i> Estadísticas de la Encuesta
+                    </h5>
+                    <form method="post" class="m-0">
+                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                        <button type="submit" class="btn-close btn-close-white" formaction="?handler=CerrarEstadisticas"></button>
+                    </form>
+                </div>
+
+                <div class="modal-body bg-light">
+                    <canvas id="chartEstadisticas"></canvas>
+                </div>
+
+                <div class="modal-footer border-top-0">
+                    <form method="post" class="m-0">
+                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                        <button class="btn btn-outline-secondary" type="submit" formaction="?handler=CerrarEstadisticas">
+                            <i class="bi bi-x-circle me-1"></i> Cerrar
+                        </button>
+                    </form>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <script>
+        renderChart(@Html.Raw(JsonSerializer.Serialize(Model.estadisticasLabels)),
+                    @Html.Raw(JsonSerializer.Serialize(Model.estadisticasValores)));
+    </script>
+}
+
+@if (Model.mostrarQRModal)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content p-3 text-center">
+                <h5 class="mb-3">Código QR</h5>
+
+                <img src="@($"https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={Model.qrUrlGenerado}")"
+                     alt="QR Encuesta" class="img-fluid mx-auto d-block rounded shadow" />
+
+                <div class="d-flex justify-content-center gap-2 mt-3">
+                    <form method="post" class="m-0">
+                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                        <button class="btn btn-outline-primary" type="submit" formaction="?handler=DescargarQR">
+                            <i class="bi bi-download me-1"></i> Descargar
+                        </button>
+                    </form>
+
+                    <form method="post" class="m-0">
+                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                        <button class="btn btn-secondary" type="submit" formaction="?handler=CerrarQR">
+                            <i class="bi bi-x-circle me-1"></i> Cerrar
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.mostrarModalVistaPrevia)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);"
+         onclick="document.getElementById('btnCerrarVista').click();">
+
+        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down modal-xl"
+             onclick="event.stopPropagation();">
+            <div class="modal-content rounded-3 shadow-lg" style="overflow:hidden;">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Vista previa web</h5>
+                    <form method="post" class="m-0">
+                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                        <button id="btnCerrarVista" type="submit" class="btn-close" formaction="?handler=CerrarVistaPrevia"></button>
+                    </form>
+                </div>
+
+                <div class="modal-body" style="background-color: var(--color-bg-cyan-light);">
+                    <!-- En Razor no puedes usar el componente Blazor <Preview ...>.
+                         O lo pasas a Partial/ViewComponent, o lo pones en un iframe a una ruta MVC/Razor.
+                         Aquí lo dejo como placeholder: -->
+                    <iframe class="w-100" style="height:70vh; border:0;"
+                            src="/Encuesta/Preview/@Model.IdEncuestaSeleccionada"></iframe>
+                </div>
+
+            </div>
+        </div>
+    </div>
+}
+
+@if (Model.isLoading)
+{
+    <div class="overlay">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="text-light mt-2">Cargando archivo...</p>
+    </div>
+}
+
+<script>
+    function copyToClipboard(text) {
+        if (!text) return;
+        navigator.clipboard.writeText(text);
+    }
+</script>
+<script>
+        function setIdPregunta(id) {
+      const el = document.getElementById('IdPregunta');
+      if (el) el.value = id;
+    }
+    function confirmDelete(id) {
+      if (!confirm('¿Seguro que deseas eliminar la pregunta?')) return false;
+      setIdPregunta(id);
+      return true;
+    }
+</script>
+<script>
+    function toggleBaseAndLoginFields() {
+        const chkBase = document.getElementById('chkBase');
+        const chkLogin = document.getElementById('chkLogin');
+
+        const baseContainer = document.getElementById('baseFileContainer');
+        const loginContainer = document.getElementById('loginImageContainer');
+
+        if (chkBase && baseContainer) {
+            baseContainer.style.display = chkBase.checked ? 'block' : 'none';
+        }
+
+        if (chkLogin && loginContainer) {
+            loginContainer.style.display = chkLogin.checked ? 'block' : 'none';
+        }
+    }
+
+    // eventos
+    document.getElementById('chkBase')?.addEventListener('change', toggleBaseAndLoginFields);
+    document.getElementById('chkLogin')?.addEventListener('change', toggleBaseAndLoginFields);
+
+    // ejecutar al cargar el modal
+    document.addEventListener('DOMContentLoaded', toggleBaseAndLoginFields);
+</script>

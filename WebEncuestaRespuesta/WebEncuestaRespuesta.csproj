@@ -11,4 +11,8 @@
     <PackageReference Include="EPPlus" Version="8.4.0" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="ViewModels\" />
+  </ItemGroup>
+
 </Project>
