@@ -1,0 +1,29 @@
+﻿@page "/NPS/Encuesta/Agradecimiento"
+@model WebEncuestaRespuesta.Pages.NPS.Encuesta.AgradecimientoModel
+
+
+@{
+    ViewData["Title"] = "Encuestas";
+}
+
+<div class="banbif-confirmacion">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12">
+                <img src="/Images/Preview/icon-experiencia.png" alt="BanBif" height="145" width="145" />
+            </div>
+            <div class="col-12">
+                <h2 class="texted-one">¡Gracias por compartirnos tu experiencia!</h2>
+            </div>
+            <div class="col-12">
+                <h4 class="texted-two">Tu opinión es muy valiosa y nos ayuda a seguir mejorando.</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        if (window.loadSurveyStyles) window.loadSurveyStyles();
+    </script>
+}

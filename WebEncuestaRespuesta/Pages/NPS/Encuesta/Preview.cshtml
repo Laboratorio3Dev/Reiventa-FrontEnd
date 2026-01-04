@@ -1,0 +1,215 @@
+﻿@page "/Encuesta/Preview/{LLaveEncuesta:int}"
+@model WebEncuestaRespuesta.Pages.NPS.Encuesta.PreviewModel
+@using WebEncuestaRespuesta.DTO.NPS
+
+
+@{
+    Layout = "_EncuestaLayout";
+}
+
+@if (Model.encuesta is null)
+{
+    <div class="text-center mt-5">
+        <div class="spinner-border text-primary" role="status"></div>
+        <p class="mt-2">Cargando encuesta...</p>
+    </div>
+}
+else
+{
+    <section class="banbif-calificacion banbif-bg-white">
+        <div class="container">
+            <div class="survey-container">
+                <h1 class="survey-title">@Model.encuesta.TituloEncuesta</h1>
+
+                <form method="post">
+                    <div class="question-section">
+
+                        @if (Model.encuesta?.EncuestaPreguntas != null && Model.encuesta.EncuestaPreguntas.Any())
+                        {
+                            foreach (var preg in Model.encuesta.EncuestaPreguntas.OrderBy(x => x.Orden))
+                            {
+                                var orden = preg.Orden ?? 0;
+
+                                if (preg.TipoPregunta == "Escala Numérica")
+                                {
+                                    <p class="question-text">@string.Concat(preg.Orden, ". ", preg.Pregunta)</p>
+                                    <p class="question-text-mobile left">No lo recomendaría</p>
+
+                                    <div class="rating-scale" data-orden="@orden" data-rangomax="@(preg.RangoMaximo ?? 0)">
+                                        @for (int? i = preg.RangoMinimo; i <= preg.RangoMaximo; i++)
+                                        {
+                                            if (i == preg.RangoMinimo)
+                                            {
+                                                <label class="rating-item">
+                                                    <input type="radio"
+                                                           name="Respuesta[@orden]"
+                                                           value="@i"
+                                                           data-orden="@orden"
+                                                           class="js-rating" />
+                                                    <span>@i</span>
+                                                    <span class="rating-label">@preg.TextoValorMinimo</span>
+                                                </label>
+                                            }
+                                            else if (i == preg.RangoMaximo)
+                                            {
+                                                <label class="rating-item">
+                                                    <input type="radio"
+                                                           name="Respuesta[@orden]"
+                                                           value="@i"
+                                                           data-orden="@orden"
+                                                           class="js-rating" />
+                                                    <span>@i</span>
+                                                    <span class="rating-label">@preg.TextoValorMaximo</span>
+                                                </label>
+                                            }
+                                            else
+                                            {
+                                                <label class="rating-item">
+                                                    <input type="radio"
+                                                           name="Respuesta[@orden]"
+                                                           value="@i"
+                                                           data-orden="@orden"
+                                                           class="js-rating" />
+                                                    <span>@i</span>
+                                                </label>
+                                            }
+                                        }
+                                    </div>
+
+                                    <p class="question-text-mobile right">Sí lo recomendaría</p>
+
+                                    if (preg.FlagComentario)
+                                    {
+                                        <div class="js-comment-block" data-orden="@orden" style="display:none;">
+                                            <p class="sub-question-text js-comment-title"></p>
+                                            <div class="text-area-container">
+                                                <textarea name="Comentario[@orden]" maxlength="300" class="extrainfo form-control"></textarea>
+                                                <div class="char-counter"><span class="charcount">00</span>/300</div>
+                                            </div>
+                                        </div>
+
+                                        <input type="hidden" class="js-txt-detractor" data-orden="@orden" value="@(preg.TextoDetractor ?? "")" />
+                                        <input type="hidden" class="js-txt-neutro" data-orden="@orden" value="@(preg.TextoNeutro ?? "")" />
+                                        <input type="hidden" class="js-txt-promotor" data-orden="@orden" value="@(preg.TextoPromotor ?? "")" />
+                                    }
+                                }
+                                else if (preg.TipoPregunta == "Escala de Likert" && preg.ValoresY != null && preg.ValoresX != null)
+                                {
+                                    <p class="question-text">@string.Concat(preg.Orden, ". ", preg.Pregunta)</p>
+
+                                    var valoresX = preg.ValoresX.Split('|').ToList();
+                                    var valoresY = preg.ValoresY.Split('|').ToList();
+
+                                    foreach (var valorY in valoresY)
+                                    {
+                                        var iActual = 0;
+
+                                        <p class="sub-question-text"><strong>@valorY</strong></p>
+
+                                        <div class="rating-scale">
+                                            @foreach (var valorX in valoresX)
+                                            {
+                                                <label class="rating-item">
+                                                    <input type="radio" name="Likert[@orden][@valorY]" value="@iActual" />
+                                                    <span>@iActual</span>
+                                                    <span class="rating-label">@valorX</span>
+                                                </label>
+                                                iActual++;
+                                            }
+                                        </div>
+                                    }
+
+                                    if (preg.FlagComentario)
+                                    {
+                                        <p class="sub-question-text">@preg.Comentario</p>
+                                        <div class="text-area-container">
+                                            <textarea name="LikertComentario[@orden]" maxlength="300" class="extrainfo form-control"></textarea>
+                                            <div class="char-counter"><span class="charcount">00</span>/300</div>
+                                        </div>
+                                    }
+                                }
+                                else if (preg.TipoPregunta == "Pregunta")
+                                {
+                                    <p class="question-text">@string.Concat(preg.Orden, ". ", preg.Pregunta)</p>
+                                    <div class="text-area-container">
+                                        <textarea name="Pregunta[@orden]" maxlength="300" class="extrainfo form-control"></textarea>
+                                        <div class="char-counter"><span class="charcount">00</span>/300</div>
+                                    </div>
+                                }
+                            }
+                        }
+                    </div>
+
+                    <div class="submit-button-container">
+                        <button type="submit" class="banbif-btn-primario lg">Enviar</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </section>
+}
+
+@section Scripts {
+    <script>
+        @Html.Raw(@"
+document.addEventListener('DOMContentLoaded', function () {
+
+    if (typeof loadSurveyStyles === 'function') {
+        loadSurveyStyles();
+    }
+
+    document.querySelectorAll('.js-rating').forEach(function (radio) {
+
+        radio.addEventListener('change', function () {
+
+            const orden = parseInt(this.dataset.orden || '0');
+            const valor = parseInt(this.value || '0');
+
+            const scale = this.closest('.rating-scale');
+            if (!scale) return;
+
+            const rangoMax = parseInt(scale.dataset.rangomax || '0');
+            const valorNegativo = Math.floor(rangoMax / 3);
+
+            let tipo = 0;
+            if (valor <= valorNegativo) tipo = 1;
+            else if (valor <= valorNegativo * 2) tipo = 2;
+            else if (valor <= rangoMax) tipo = 3;
+
+            const block = document.querySelector('.js-comment-block[data-orden=""' + orden + '""]');
+            if (!block) return;
+
+            if (tipo === 0) {
+                block.style.display = 'none';
+                return;
+            }
+
+            const det = document.querySelector('.js-txt-detractor[data-orden=""' + orden + '""]')?.value || '';
+            const neu = document.querySelector('.js-txt-neutro[data-orden=""' + orden + '""]')?.value || '';
+            const pro = document.querySelector('.js-txt-promotor[data-orden=""' + orden + '""]')?.value || '';
+
+            const title = block.querySelector('.js-comment-title');
+            if (title) {
+                title.textContent = (tipo === 1) ? det : (tipo === 2) ? neu : pro;
+            }
+
+            block.style.display = 'block';
+        });
+
+    });
+
+    document.addEventListener('input', function (e) {
+        const ta = e.target;
+        if (!ta || !ta.classList || !ta.classList.contains('extrainfo')) return;
+
+        const container = ta.closest('.text-area-container');
+        const counter = container?.querySelector('.charcount');
+        if (!counter) return;
+
+        counter.textContent = String(ta.value.length).padStart(2, '0');
+    });
+
+});
+")
+    </script>
+}

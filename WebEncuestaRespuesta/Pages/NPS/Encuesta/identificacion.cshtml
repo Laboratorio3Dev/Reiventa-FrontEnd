@@ -1,0 +1,119 @@
+﻿@page "/NPS/Encuesta/Inicio"
+@model WebEncuestaRespuesta.Pages.NPS.Encuesta.identificacionModel
+@{
+    ViewData["Title"] = "Encuestas";
+    Layout = "_IdentificacionLayout";
+}
+    <section class="banbif-hero banbif-bg-white">
+        <div class="banbif-bg-image-form" aria-hidden="true"></div>
+
+        <div class="container banbif-banner">
+            <div class="row g-0 align-items-stretch">
+                <div id="header-text" class="col-md-7 d-flex">
+                    <div class="hero-copy manrope">
+                        <p class="mmanrope-semibold texted-one">¡Hola!</p>
+                        <h1 class="mb-0 manrope-regular texted-two">
+                            Ayúdanos a seguir mejorando<br class="d-none d-md-block">
+                            tu experiencia en nuestros<br class="d-none d-md-block">
+                            <strong>cajeros BanBif</strong>
+                        </h1>
+                    </div>
+                </div>
+
+                <div class="col-md-4 offset-md-1">
+                    <div class="form-section">
+                        <h2 class="manrope manrope-regular texted-one">Es una encuesta que te tomará menos de 5 minutos</h2>
+                        <p class="manrope manrope-regular texted-two">Antes de empezar, ingresa tu documento</p>
+
+                        @if (!string.IsNullOrWhiteSpace(Model.Error))
+                        {
+                            <div class="alert alert-danger">@Model.Error</div>
+                        }
+
+                        <form id="form" method="post" novalidate>
+                            @Html.AntiForgeryToken()
+
+                            <input type="hidden" name="encuesta" value="@Model.encuestaEnctriptada" />
+
+                            <div class="form-group banbif-width-350 banbif-mb-0">
+                                <input asp-for="Dni"
+                                       type="text"
+                                       class="form-control"
+                                       id="dni"
+                                       maxlength="8"
+                                       name="dni"
+                                       autocomplete="off"
+                                       required
+                                       onkeypress="return validaNumericos(event)" />
+
+                                <label for="dni">Número de documento</label>
+
+                                <p class="banbif-error message-check-icon @(string.IsNullOrWhiteSpace(Model.ErrorDni) ? "banbif-none" : "")" id="errorDNI">
+                                <img src="~/images/preview/icon-info-off.png" alt="Icono información" width="16" height="16">
+                                    @(string.IsNullOrWhiteSpace(Model.ErrorDni) ? "Completa este campo" : Model.ErrorDni)
+                                </p>
+                            </div>
+
+                            <div class="banbif-width-350 text-center">
+                                <div class="checkbox d-terminos">
+
+                                    <label for="condicion1" class="control control--checkbox d-flex align-items-center">
+                                        <input asp-for="Condicion1" type="checkbox" id="condicion1" name="condicion1" />
+                                        <p class="banbif-color-gray">
+                                            He leído y acepto la
+                                            <a class="link-hover banbif-sub-hover"
+                                               href="https://www.banbif.com.pe/Portals/0/PDF/CONSENTIMIENTO-DE-DATOS-PERSONALES.pdf"
+                                               target="_blank1">
+                                                Cláusula de información y consentimiento para
+                                                tratamiento datos personales.
+                                            </a>
+                                        </p>
+                                        <div class="control__indicator"></div>
+                                    </label>
+
+                                    <p class="banbif-error banbif-pl-24 banbif-pt-8 message-check @(Model.MostrarErrorCondicion1 ? "" : "banbif-none")">
+                                    <img src="~/images/preview/icon-info-off.png" alt="Icono información" width="16" height="16">
+                                        Para continuar debes leer y aceptar esta cláusula.
+                                    </p>
+
+                                    <label for="condicion2" class="control control--checkbox d-flex align-items-center">
+                                        <input asp-for="Condicion2" type="checkbox" id="condicion2" name="condicion2" />
+                                        <p class="banbif-color-gray">
+                                            He leído y otorgo mi
+                                            <a class="link-hover banbif-sub-hover"
+                                               href="https://www.banbif.com.pe/Portals/0/PDF/consentimiento-para-el-tratamiento-de-mis-datos-personales-con-finalidades-comerciales.pdf"
+                                               target="_blank2">
+                                                Consentimiento para el Tratamiento de mis datos
+                                                personales con finalidades comerciales.
+                                            </a>
+                                        </p>
+                                        <div class="control__indicator"></div>
+                                    </label>
+
+                                </div>
+                            </div>
+
+                            <input name="submitted" type="hidden" value="true" />
+
+                            <div class="buttoned">
+                                <button id="btnNext" class="banbif-btn-primario w-100" type="submit">Continuar</button>
+                            </div>
+                        </form>
+
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+
+<script src="js/encuestaInicio.js"></script>
+<script src="https://www.google.com/recaptcha/api.js" async defer></script>
+
+@section Scripts {
+    <script>
+        if (window.loadSurveyStyles) window.loadSurveyStyles();
+        if (window.encuestaInicio && window.encuestaInicio.init) window.encuestaInicio.init();
+    </script>
+
+}
