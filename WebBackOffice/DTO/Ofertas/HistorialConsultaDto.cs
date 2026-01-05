@@ -4,8 +4,8 @@
     {
         public string Documento { get; set; }
         public string Usuario { get; set; }
-        public DateTime Fecha { get; set; }
-        public bool EsCliente { get; set; }
+        public string Fecha { get; set; }
+        public string FlagBase { get; set; }
     }
 
 }
