@@ -1,0 +1,64 @@
+﻿<!DOCTYPE html>
+<html lang="es-pe">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>@ViewData["Title"] - WebEncuestaRespuesta</title>
+
+    <link rel="shortcut icon" href="~/images/favicon.ico" />
+
+    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
+
+    <link rel="stylesheet" href="~/css/app.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/EstiloEncuesta.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/str.css" asp-append-version="true" />
+    <link rel="stylesheet" href="~/css/str-base.css" asp-append-version="true" />
+</head>
+
+<body class="h-100v">
+
+    <!-- NAVBAR / HEADER -->
+    <header class="header-section">
+        <div class="banbif-header">
+            <div class="bg-wrapper">
+                <div class="container contenedor-principal">
+                    <div class="degradado">
+                        <a href="https://www.banbif.com.pe/personas" class="banbif-logo">
+                            <img src="~/Images/Preview/banbif.png" alt="BanBif Logo" height="32" />
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- CONTENIDO -->
+    <main role="main">
+        @RenderBody()
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="banbif-footer">
+        <div class="container">
+            <div class="row align-items-center">
+                <div class="col-12 col-md-auto">
+                    <img src="~/Images/Preview/banbif-footer.png" alt="BanBif" height="32" />
+                </div>
+                <div class="col-12 col-md">
+                    <p class="banbif-footer_text">
+                        © 2025 BanBif - Todos los derechos reservados. Banco Interamericano de Finanzas S.A. - RUC
+                        20101036813
+                    </p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js" asp-append-version="true"></script>
+    <script src="~/js/site.js" asp-append-version="true"></script>
+    <script src="~/js/encuestainicio.js" asp-append-version="true"></script>
+    <script src="~/js/estilosencuesta.js" asp-append-version="true"></script>
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
