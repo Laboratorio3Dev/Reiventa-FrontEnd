@@ -113,6 +113,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         {
             usuarioLogeado = HttpContext.Session.GetString("Usuario") ?? "";
             token = HttpContext.Session.GetString("Token");
+
             if (string.IsNullOrWhiteSpace(token))
                 throw new InvalidOperationException("NO_TOKEN");
         }
@@ -299,7 +300,8 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         public IActionResult OnPostNuevaEncuesta()
         {
             RequireTokenOrRedirect();
-
+            IdEncuestaSeleccionada = 0;
+            SetSession("NPS_IdEncuestaSeleccionada", 0);
             EncuestaConRespuestas = false;
             modoModal = "nuevo";
             formModel = new EncuestaResponseDTO();
@@ -368,6 +370,13 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         public IActionResult OnPostAbrirVistaPrevia()
         {
             RequireTokenOrRedirect();
+
+            SetSession("NPS_formModel", formModel);
+
+            esEdicion = GetSession("NPS_esEdicion", false);
+            IdEncuestaSeleccionada = esEdicion ? formModel.IdEncuesta : 0;
+
+            SetSession("NPS_IdEncuestaSeleccionada", IdEncuestaSeleccionada);
             SetSession("NPS_mostrarModalVistaPrevia", true);
             return RedirectToSameListState();
         }

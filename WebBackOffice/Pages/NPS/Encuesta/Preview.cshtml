@@ -2,11 +2,10 @@
 @model WebBackOffice.Pages.NPS.Encuesta.PreviewModel
 @using WebBackOffice.DTO.NPS
 
-
 @{
-    Layout = "_EncuestaLayout";
+    Layout = "_PreviewLayout";
 }
-
+<div class="preview-scroll">
 @if (Model.encuesta is null)
 {
     <div class="text-center mt-5">
@@ -95,29 +94,36 @@ else
                                 }
                                 else if (preg.TipoPregunta == "Escala de Likert" && preg.ValoresY != null && preg.ValoresX != null)
                                 {
+
+
+
                                     <p class="question-text">@string.Concat(preg.Orden, ". ", preg.Pregunta)</p>
 
                                     var valoresX = preg.ValoresX.Split('|').ToList();
                                     var valoresY = preg.ValoresY.Split('|').ToList();
+                                        foreach (var filaY in valoresY)
+                                        {
+                                            <p class="sub-question-text"><strong>@filaY</strong></p>
 
-                                    foreach (var valorY in valoresY)
-                                    {
-                                        var iActual = 0;
+                                            <div class="rating-scale likert-scale">
+                                                @{
+                                                    var iActual = 0;
+                                                }
+                                                @foreach (var etiquetaX in valoresX)
+                                                {
+                                                    var name = $"Likert[{orden}|{filaY}]";
+                                                    var id = $"likert-{orden}-{filaY}-{iActual}".Replace(" ", "_");
 
-                                        <p class="sub-question-text"><strong>@valorY</strong></p>
+                                                    <label class="rating-item">
+                                                        <input type="radio" name="Likert[@orden][@filaY]" value="@iActual" />
+                                                        <span>@iActual</span>
+                                                        <span class="rating-label">@etiquetaX</span>
+                                                    </label>
 
-                                        <div class="rating-scale">
-                                            @foreach (var valorX in valoresX)
-                                            {
-                                                <label class="rating-item">
-                                                    <input type="radio" name="Likert[@orden][@valorY]" value="@iActual" />
-                                                    <span>@iActual</span>
-                                                    <span class="rating-label">@valorX</span>
-                                                </label>
-                                                iActual++;
-                                            }
-                                        </div>
-                                    }
+                                                    iActual++;
+                                                }
+                                                </div>
+                                         }
 
                                     if (preg.FlagComentario)
                                     {
@@ -141,14 +147,15 @@ else
                     </div>
 
                     <div class="submit-button-container">
-                        <button type="submit" class="banbif-btn-primario lg">Enviar</button>
+                        <button class="banbif-btn-primario lg">Enviar</button>
                     </div>
                 </form>
             </div>
         </div>
     </section>
-}
 
+}
+</div>
 @section Scripts {
     <script>
         @Html.Raw(@"

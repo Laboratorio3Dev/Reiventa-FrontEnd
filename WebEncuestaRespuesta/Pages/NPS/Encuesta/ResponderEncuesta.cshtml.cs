@@ -56,25 +56,22 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                 return Page();
             }
 
-            if (Encuesta is null)
+            if (Encuesta == null)
+                return Redirect($"/NPS/Encuesta/noExiste");
+
+           if ((Encuesta.FlagLogin || Encuesta.FlagBase) && string.IsNullOrWhiteSpace(usuarioEncriptado))
             {
-                ErrorCarga = "No se encontró la encuesta.";
-                return Page();
+                return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaEnctriptada)}");
             }
 
-            if ((Encuesta.FlagLogin || Encuesta.FlagBase))
+            if ((Encuesta.FlagLogin || Encuesta.FlagBase) && !string.IsNullOrWhiteSpace(usuarioEncriptado))
             {
-                if (string.IsNullOrEmpty(usuarioEncriptado))
-                {
-                    return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaEnctriptada)}");
-                }
-
-                var existe = await ServiceRepositorio.validarClienteEncuesta(usuarioEncriptado, encuestaEnctriptada);
+               var existe = await ServiceRepositorio.validarClienteEncuesta(usuarioEncriptado, encuestaEnctriptada);
                 if (existe.Existe && existe.YaRespondio)
                     return Redirect("/NPS/Encuesta/Agradecimiento");
                 else if (!existe.Existe)
                 {
-                    return Redirect("/NPS/Encuesta/Agradecimiento");
+                    return Redirect("/NPS/Encuesta/noIdentificado");
                 }
             }
 
