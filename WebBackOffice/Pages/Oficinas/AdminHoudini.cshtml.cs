@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using System.Text.Json;
+using WebBackOffice.DTO.Aprendizaje;
 using WebBackOffice.DTO.Oficinas;
 using WebBackOffice.Pages.Repositorios;
 using WebBackOffice.ViewModels.Oficinas;
@@ -26,33 +27,33 @@ namespace WebBackOffice.Pages.Oficinas
 
         public List<ProductoVM> PagedProductos { get; set; } = new();
 
+
         public int CurrentPage { get; set; } = 1;
         public int TotalPages { get; set; }
+        public int PageSize { get; set; } = 5;
 
         public bool CanGoPrevious => CurrentPage > 1;
         public bool CanGoNext => CurrentPage < TotalPages;
-
         public async Task OnGetAsync(int pageNumber = 1)
         {
-            var token = HttpContext.Session.GetString("Token");
             CurrentPage = pageNumber;
 
-            var productosDto = await _service.ObtenerProductos(token);
+            var token = HttpContext.Session.GetString("Token");
+
+            var productos = await _service.ObtenerProductos(token);
 
             if (!string.IsNullOrWhiteSpace(SearchTerm))
             {
-                productosDto = productosDto
-                    .Where(x => x.Titulo.Contains(SearchTerm,
-                        StringComparison.OrdinalIgnoreCase))
+                productos = productos
+                    .Where(p => p.Titulo.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
                     .ToList();
             }
 
-            int pageSize = 10;
-            TotalPages = (int)Math.Ceiling(productosDto.Count / (double)pageSize);
+            TotalPages = (int)Math.Ceiling(productos.Count / (double)PageSize);
 
-            PagedProductos = productosDto
-                .Skip((CurrentPage - 1) * pageSize)
-                .Take(pageSize)
+            PagedProductos = productos
+                .Skip((CurrentPage - 1) * PageSize)
+                .Take(PageSize)
                 .Select(p => new ProductoVM
                 {
                     IdProducto = p.IdProducto,
@@ -65,33 +66,70 @@ namespace WebBackOffice.Pages.Oficinas
 
         public async Task<IActionResult> OnPostGuardarProductoAsync(ProductoDTO producto)
         {
-            if (producto == null)
-            {
-                return new JsonResult(new
+            if (!ModelState.IsValid)
+                return new JsonResult(new ResponseTransacciones
                 {
-                    success = false,
-                    message = "Producto llegó null"
+                    IsSuccess = false,
+                    Message = "Datos inválidos"
                 });
-            }
-
-            if (string.IsNullOrWhiteSpace(producto.Titulo))
-            {
-                return new JsonResult(new
-                {
-                    success = false,
-                    message = "Título obligatorio"
-                });
-            }
 
             var token = HttpContext.Session.GetString("Token");
+            // 🔒 Regla de negocio: {Nombre} obligatorio
+            if (!producto.Asunto.Contains("{Nombre}"))
+            {
+                return new JsonResult(new ResponseTransacciones
+                {
+                    IsSuccess = false,
+                    Message = "El asunto debe contener el texto {Nombre}"
+                });
+            }
+            ResponseTransacciones response;
 
-            var response = await _service.GuardarProducto(token, producto);
+            if (producto.IdProducto.HasValue)
+            {
+                response = await _service.ActualizarProducto(token, producto);
+            }
+            else
+            {
+                response = await _service.GuardarProducto(token, producto);
+            }
 
             return new JsonResult(response);
         }
 
+        public async Task<IActionResult> OnGetObtenerProductoAsync(int id)
+        {
+            var token = HttpContext.Session.GetString("Token");
 
+            var producto = await _service.ObtenerProductoPorId(token, id);
 
+            if (producto == null)
+                return NotFound();
+
+            return new JsonResult(producto);
+        }
+
+        public async Task<IActionResult> OnPostDesactivarProductoAsync(int id)
+        {
+            var token = HttpContext.Session.GetString("Token");
+
+            if (string.IsNullOrEmpty(token))
+            {
+                return new JsonResult(new
+                {
+                    isSuccess = false,
+                    message = "Sesión expirada"
+                });
+            }
+
+            var response = await _service.DesactivarProducto(token, id);
+
+            return new JsonResult(new
+            {
+                isSuccess = response.IsSuccess,
+                message = response.Message
+            });
+        }
 
     }
 }
