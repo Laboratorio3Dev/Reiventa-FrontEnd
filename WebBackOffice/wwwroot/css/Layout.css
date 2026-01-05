@@ -233,3 +233,39 @@ body {
 .field-validation-error {
     color: red !important;
 }
+.loading-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(255, 255, 255, 0.75);
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.spinner-container {
+    text-align: center;
+}
+
+.d-none {
+    display: none !important;
+}
+/* ALERT */
+.css_alerta_contenedor {
+    position: fixed;
+    bottom: 0px;
+    width: 100%;
+    padding: 10px 10px 0px 10px;
+    z-index: 9999;
+    display: none;
+}
+button.close {
+    -webkit-appearance: none;
+    padding: 0;
+    cursor: pointer;
+    background: transparent;
+    border: 0;
+}
