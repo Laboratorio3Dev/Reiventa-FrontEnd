@@ -1,0 +1,32 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Vista previa</title>
+
+    <!-- Tus CSS del survey -->
+    <link rel="stylesheet" href="~/css/Layout.css" />
+    <link rel="stylesheet" href="~/css/PlanAccion.css" />
+    <link rel="stylesheet" href="~/css/str.css" />
+    <link rel="stylesheet" href="~/css/str-base.css" />
+    <link rel="stylesheet" href="~/css/app.css"/>
+    <link rel="stylesheet" href="~/css/appDark.css" />
+    <link rel="stylesheet" href="~/css/EstiloEncuesta.css" />
+</head>
+<body>
+    <div class="encuesta">
+        <main class="contenedor encuesta__main">
+            @RenderBody()
+        </main>
+    </div>
+
+    <script src="~/js/survey.js"></script>
+
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

@@ -1,13 +1,13 @@
 ﻿using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Http.Features;
 using Microsoft.Extensions.Options;
+using OfficeOpenXml;
 using System.Net.Http.Headers;
 using WebBackOffice.DTO.BackOffice;
 using WebBackOffice.Pages.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
 builder.Services.AddRazorPages();
 
 builder.Services.Configure<ApiSettings>(
@@ -28,10 +28,9 @@ builder.Services.AddHttpClient("ApiClient", (sp, client) =>
 
 builder.Services.Configure<FormOptions>(options =>
 {
-    options.MultipartBodyLengthLimit = 200 * 1024 * 1024; // 200 MB
+    options.MultipartBodyLengthLimit = 200 * 1024 * 1024;
 });
 
-// 🔐 AUTENTICACIÓN
 builder.Services
     .AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
     .AddCookie(options =>
@@ -42,27 +41,27 @@ builder.Services
         options.SlidingExpiration = true;
     });
 
-// 🔑 AUTORIZACIÓN
 builder.Services.AddAuthorization();
 
 builder.Services.AddRazorPages();
+builder.Services.AddScoped<NPSService>();
 
 builder.Services.AddScoped<UserSessionService>();
 
 builder.Services.AddScoped<HoudiniServices>();
 builder.Services.AddScoped<BackOfficeLabService>();
+builder.Services.AddScoped<AdminHoudiniServices>();
 
+ExcelPackage.License.SetNonCommercialOrganization("WebBackOffice");
 
 
 builder.Services.AddSession();
 
 var app = builder.Build();
 
-// Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 

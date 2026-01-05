@@ -9,7 +9,7 @@
         // HTML del correo (editor)
         public string HtmlCorreo { get; set; }
 
-
+        public string Asunto { get; set; }
 
         public bool Seleccionado { get; set; }
     }
