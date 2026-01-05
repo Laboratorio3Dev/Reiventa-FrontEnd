@@ -55,7 +55,11 @@ builder.Services.AddScoped<AdminHoudiniServices>();
 ExcelPackage.License.SetNonCommercialOrganization("WebBackOffice");
 
 
-builder.Services.AddSession();
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromHours(1);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
