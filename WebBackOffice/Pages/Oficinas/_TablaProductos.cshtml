@@ -1,0 +1,48 @@
+﻿@model WebBackOffice.Pages.Oficinas.AdminHoudiniModel
+
+<table class="custom-table">
+    <thead>
+        <tr class="text-center">
+            <th>Título</th>
+            <th>Sub Título</th>
+            <th>Asunto</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var e in Model.PagedProductos)
+        {
+            <tr class="text-center">
+                <td>@e.Titulo</td>
+                <td>@e.SubTitulo</td>
+                <td>@e.Asunto</td>
+                <td>
+                    <button class="btn btn-primary"
+                            onclick="editarProducto(@e.IdProducto)">
+                        Editar
+                    </button>
+                    <button class="btn btn-outline-danger"
+                            onclick="desactivarProducto(@e.IdProducto)">
+                        Desactivar
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+<div class="d-flex justify-content-between mt-3">
+    <button class="btn btn-outline-secondary"
+            onclick="cambiarPagina(@(Model.CurrentPage - 1))"
+            @(Model.CanGoPrevious ? "" : "disabled")>
+        Anterior
+    </button>
+
+    <span>Página @Model.CurrentPage de @Model.TotalPages</span>
+
+    <button class="btn btn-outline-secondary"
+            onclick="cambiarPagina(@(Model.CurrentPage + 1))"
+            @(Model.CanGoNext ? "" : "disabled")>
+        Siguiente
+    </button>
+</div>

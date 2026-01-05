@@ -36,32 +36,7 @@ namespace WebBackOffice.Pages.Oficinas
         public bool CanGoNext => CurrentPage < TotalPages;
         public async Task OnGetAsync(int pageNumber = 1)
         {
-            CurrentPage = pageNumber;
-
-            var token = HttpContext.Session.GetString("Token");
-
-            var productos = await _service.ObtenerProductos(token);
-
-            if (!string.IsNullOrWhiteSpace(SearchTerm))
-            {
-                productos = productos
-                    .Where(p => p.Titulo.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
-                    .ToList();
-            }
-
-            TotalPages = (int)Math.Ceiling(productos.Count / (double)PageSize);
-
-            PagedProductos = productos
-                .Skip((CurrentPage - 1) * PageSize)
-                .Take(PageSize)
-                .Select(p => new ProductoVM
-                {
-                    IdProducto = p.IdProducto,
-                    Titulo = p.Titulo,
-                    SubTitulo = p.SubTitulo,
-                    Asunto = p.Asunto
-                })
-                .ToList();
+            await CargarProductosAsync(pageNumber);
         }
 
         public async Task<IActionResult> OnPostGuardarProductoAsync(ProductoDTO producto)
@@ -130,6 +105,49 @@ namespace WebBackOffice.Pages.Oficinas
                 message = response.Message
             });
         }
+
+        public async Task<PartialViewResult> OnGetTablaProductosAsync(
+      int pageNumber,
+      string? searchTerm)
+        {
+            SearchTerm = searchTerm;
+            await CargarProductosAsync(pageNumber);
+
+            return Partial("_TablaProductos", this);
+        }
+
+
+
+        private async Task CargarProductosAsync(int pageNumber)
+        {
+        
+            var token = HttpContext.Session.GetString("Token");
+
+            var productosDto = await _service.ObtenerProductos(token);
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+            {
+                productosDto = productosDto
+                    .Where(p => p.Titulo.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase))
+                    .ToList();
+            }
+
+            TotalPages = (int)Math.Ceiling(productosDto.Count / (double)PageSize);
+            CurrentPage = pageNumber;
+
+            PagedProductos = productosDto
+                .Skip((pageNumber - 1) * PageSize)
+                .Take(PageSize)
+                 .Select(p => new ProductoVM
+                 {
+                     IdProducto = p.IdProducto,
+                     Titulo = p.Titulo,
+                     SubTitulo = p.SubTitulo,
+                     Asunto = p.Asunto
+                 })
+                .ToList();
+        }
+
 
     }
 }
