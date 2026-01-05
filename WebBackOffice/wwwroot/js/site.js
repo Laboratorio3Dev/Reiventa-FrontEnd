@@ -125,3 +125,133 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 });
 
+
+function ValidarFormulario(form) {
+
+    var MsjObligatorio = "<small class='form-text text-muted field-validation-error'>Campo {0} obligatorio</small>";
+    var validacion = true;
+    $(".form-text").remove();
+    $("#" + form + " .form-control").removeClass("hasError");
+    $("#" + form + " .custom-file").removeClass("hasError");
+    $("#" + form + " div").removeClass("hasError");
+    $("#" + form + " .select2-selection").removeClass("hasError");
+    $("#" + form + " .custom-file-label").removeClass("hasError");
+    $("#" + form + " .cam-peoplepicker-userlookup").removeClass("hasError");
+    $("#" + form + " input").removeClass("hasErrorCheckBox");
+    $("#" + form + " div").removeClass("is-invalid");
+    $("#" + form + " .required").each(function () {
+        if ($(this).is(":visible")) {
+            if (this.type == "checkbox") {
+                if (!$(this).prop('checked')) {
+                    $(this).addClass("hasErrorCheckBox");
+                    validacion = false;
+                }
+            } else if (this.localName == "input" || this.localName == "select" || this.localName == "textarea") {
+                if ($(this).val() == "" || $(this).val() == "0" || $(this).val() == "-1" || $(this).val() == "[]" || $(this).val() == null) {
+                    if ($(this).hasClass("reference")) {
+                        var reference = this.className.split("ref_")[1];
+                        var objreference = $("#" + reference);
+                        if (objreference[0].type == "checkbox") {
+                            if ($(this).hasClass("controlSiNo")) {
+                                if (objreference.prop('checked')) {
+                                    $(this.parentElement).addClass("hasError");
+                                    validacion = false;
+                                }
+                            } else {
+                                if (!objreference.prop('checked')) {
+                                    $(this).addClass("hasError");
+                                    validacion = false;
+                                }
+                            }
+                        } else {
+                            objreference.addClass("hasError");
+                            validacion = false;
+                        }
+                    } else {
+                        if ($(this).hasClass("selectpicker")) {
+                            $(this).parent().addClass("is-invalid");
+                            var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                            $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                            validacion = false;
+                        } else if ($(this).hasClass("custom-file-input")) {
+                            $(this).parent().find(".custom-file-label").addClass("hasError");
+                            var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                            $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                            validacion = false;
+                        } else if ($(this).parent().hasClass("date")) {
+                            $(this).addClass("hasError");
+                            var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                            $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                            validacion = false;
+                        } else if ($(this).hasClass("selectMultiple")) {
+                            var id = $(this).attr("id");
+                            if ($("#" + id + ">option").length <= 0) {
+                                $(this).addClass("hasError");
+                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                                $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                                validacion = false;
+                            }
+                        } else {
+                            $(this).addClass("hasError");
+                            var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                            $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                            validacion = false;
+                        }
+                    }
+                } else {
+                    if ($(this).attr("minlength") != undefined && $(this).attr("minlength") != null) {
+                        if ($(this).val().length < $(this).attr("minlength")) {
+                            $(this).addClass("hasError");
+                            validacion = false;
+                        }
+                    }
+                }
+            } else if (this.localName == "p") {
+                if ($(this).html() == "") {
+                    $(this).addClass("hasError");
+                    validacion = false;
+                }
+            } else if (this.localName == "table") {
+                var tableid = $(this).attr("id");
+                if ($("#" + tableid + " tbody").html().indexOf("No se encontraron resultados") != -1) {
+                    $(this).parent().parent().addClass("hasError");
+                    validacion = false;
+                }
+            }
+        } else {
+            if (this.type == "hidden") {
+                if ($(this).val() == "" || $(this).val() == "0" || $(this).val() == "-1" || $(this).val() == "[]") {
+                    if ($(this).hasClass("reference")) {
+                        var reference = this.className.split("ref_")[1];
+                        var objreference = $("#" + reference);
+                        if (objreference[0].type == "checkbox") {
+                            if ($(this).hasClass("controlSiNo")) {
+                                if (objreference.prop('checked')) {
+                                    $(this.parentElement).addClass("hasError");
+                                    validacion = false;
+                                }
+                            } else {
+                                if (!objreference.prop('checked')) {
+                                    $(this).addClass("hasError");
+                                    validacion = false;
+                                }
+                            }
+                        } else {
+                            objreference.parent().addClass("hasError");
+                            var Label = $("label[for='" + $(this).attr("id") + "']").text();
+                            objreference.parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                            validacion = false;
+                        }
+                    } else if ($(this).hasClass("cam-peoplepicker-inputvalue")) {
+                        $(this).parent().find(".cam-peoplepicker-userlookup").addClass("hasError");
+                        var Label = "";
+                        $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
+                        validacion = false;
+                    }
+                }
+            }
+        }
+    });
+
+    return validacion;
+}
