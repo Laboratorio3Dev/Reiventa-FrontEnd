@@ -1045,3 +1045,23 @@ button:not(:disabled),
 .tab-content > .active {
   display: block;
 }
+.likert-item {
+    text-align: center;
+    padding: 8px;
+}
+
+    .likert-item .rating-label {
+        display: block;
+        margin-top: 6px;
+        font-size: 0.85rem;
+        line-height: 1.2;
+        white-space: normal;
+    }
+.likert-scale {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: 72px; /* ancho fijo por opción */
+    gap: 16px;
+    width: fit-content; /* clave: ajusta al contenido */
+    margin: 0 auto 16px; /* centrado */
+}
