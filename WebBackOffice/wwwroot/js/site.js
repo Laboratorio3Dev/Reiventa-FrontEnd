@@ -255,3 +255,53 @@ function ValidarFormulario(form) {
 
     return validacion;
 }
+
+function showLoading(texto = 'Procesando...') {
+    const overlay = document.getElementById('globalLoading');
+    overlay.querySelector('.fw-semibold').innerText = texto;
+    overlay.classList.remove('d-none');
+}
+
+function hideLoading() {
+    document.getElementById('globalLoading').classList.add('d-none');
+}
+async function fetchConLoading(url, options, texto = 'Procesando...') {
+    try {
+        
+        showLoading(texto);
+
+        const response = await fetch(url, options);
+
+        if (!response.ok) {
+            throw new Error(`Error HTTP ${response.status}`);
+        }
+
+        return await response.json();
+    } finally {
+        setTimeout(() => {
+            hideLoading();
+        }, 500);
+      
+    }
+}
+function MuestraMensaje(pTitulo, pMensaje, pTipo) {
+    if (pTipo == "E") {
+        $("#dvAlertaERROR_titulo").html(pTitulo);
+        $("#dvAlertaERROR_msg").html(pMensaje);
+        $("#dvAlertaERROR").show();
+        $("#dvAlertaERROR").delay(6000).fadeOut(300);
+    }
+    if (pTipo == "W") {
+        $("#dvAlertaWARN_titulo").html(pTitulo);
+        $("#dvAlertaWARN_msg").html(pMensaje);
+        $("#dvAlertaWARN").show();
+        $("#dvAlertaWARN").delay(6000).fadeOut(300);
+    }
+    if (pTipo == "OK") {
+        $("#dvAlertaOK_titulo").html(pTitulo);
+        $("#dvAlertaOK_msg").html(pMensaje);
+        $("#dvAlertaOK").show();
+        $("#dvAlertaOK").delay(6000).fadeOut(300);
+    }
+}
+

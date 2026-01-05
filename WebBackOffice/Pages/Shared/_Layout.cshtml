@@ -1,8 +1,9 @@
 ﻿@using Microsoft.AspNetCore.Http
 @using System.Text.Json
+@using Microsoft.Extensions.Options
 @using WebBackOffice.DTO.BackOffice
 @using WebBackOffice.Pages.Helper
-
+@inject IOptions<SessionOptions> SessionOptions
 @{
     var menuJson = Context.Session.GetString("MenuUsuario");
 
@@ -33,9 +34,15 @@
 
 </head>
 
-<body>
+<body onload="VigilaActividad();">
 
-<div class="layout">
+    <div id="globalLoading" class="loading-overlay d-none">
+        <div class="spinner-container">
+            <div class="spinner-border text-primary" role="status"></div>
+            <div class="mt-2 fw-semibold">Procesando...</div>
+        </div>
+    </div>
+    <div class="layout" id="content-AppPart">
 
     <!-- SIDEBAR -->
     <aside class="sidebar">
@@ -107,10 +114,106 @@
     </main>
 
 </div>
-  
+
+    <div id="dvAlertaOK" class="css_alerta_contenedor">
+        <div class="alert alert-success alert-dismissable">
+            <button onclick="javascript: $('#dvAlertaOK').hide();" class="close" type="button">×</button>
+            <a class="alert-link" href="#"><span id="dvAlertaOK_titulo">!</span></a>
+            <span id="dvAlertaOK_msg">.</span>
+        </div>
+    </div>
+    <div id="dvAlertaWARN" class="css_alerta_contenedor">
+        <div class="alert alert-warning alert-dismissable">
+            <button onclick="javascript: $('#dvAlertaWARN').hide();" class="close" type="button">×</button>
+            <a class="alert-link" href="#"><span id="dvAlertaWARN_titulo">!</span></a>
+            <span id="dvAlertaWARN_msg">WARN.</span>
+        </div>
+    </div>
+    <div id="dvAlertaERROR" class="css_alerta_contenedor">
+        <div class="alert alert-danger alert-dismissable">
+            <button onclick="javascript: $('#dvAlertaERROR').hide();" class="close" type="button">×</button>
+            <a class="alert-link" href="#"><span id="dvAlertaERROR_titulo">!</span></a>
+            <span id="dvAlertaERROR_msg">ERROR.</span>
+        </div>
+    </div>
+
+
+    <div class="modal fade" id="modalsession" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title">Sesión Expirada</h5>
+                </div>
+                <div class="modal-body text-center">
+                    <i class="fa-solid fa-clock-rotate-left fa-3x mb-3 text-muted"></i>
+                    <p>Su sesión ha finalizado por inactividad. Por favor, vuelva a iniciar sesión.</p>
+                </div>
+                <div class="modal-footer">
+                    <a asp-page="/BackOffice/Logout" class="btn btn-primary w-100">
+                        Ir al Login
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 <script src="~/js/site.js"></script>
 <script src="~/lib/jquery/dist/jquery.min.js"></script>
 <script src="~/lib/bootstrap/dist/js/bootstrap.bundle.min.js"></script>
+
+<script type="text/javascript">
+     let modalsession;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        modalsession = new bootstrap.Modal(
+            document.getElementById('modalsession')
+        );
+    });
+    var timeoutMinutes = @SessionOptions.Value.IdleTimeout.TotalMinutes;
+    console.log("El timeout es: " + timeoutMinutes);
+    var segundosDesdeUltimaActividad = 0;
+    var BanderaActividad = false;
+
+    function VigilaActividad() {
+        segundosDesdeUltimaActividad = 0;
+        BanderaActividad = false;
+        $('#content-AppPart').on('click', function (event) {
+            solicitarReload();
+        });
+        setInterval(ControlTiempo, 60000);
+    }
+
+    function ControlTiempo() {
+        var maximaInactividad = (parseInt(timeoutMinutes));
+        segundosDesdeUltimaActividad++;
+        if (segundosDesdeUltimaActividad == maximaInactividad) {
+        
+            modalsession.show();
+            BanderaActividad = true;
+        }
+    }
+
+    function reseteaActividad() {
+        segundosDesdeUltimaActividad = 0;
+    }
+
+    function solicitarReload() {
+        if (BanderaActividad == true) {
+          
+              modalsession.show();
+        }
+    }
+
+    var EventosActividad = [
+        'keydown', 'keypress', 'scroll', 'mousedown', 'mousemove', 'touchstart', 'resize'
+    ];
+
+    EventosActividad.forEach(function (eventName) {
+        document.addEventListener(eventName, reseteaActividad, true);
+    });
+        function Reload() {
+        window.parent.postMessage("reload", "*");
+    }
+</script>
 </html>
 
