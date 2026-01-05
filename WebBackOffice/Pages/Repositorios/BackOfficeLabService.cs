@@ -153,6 +153,27 @@ namespace WebBackOffice.Pages.Repositorios
             return null;
         }
 
+        public async Task<List<UsuarioDto>> ListarUsuarios(string token, int Tipo)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var request = new RequestListarUsuarios { Tipo = Tipo };
+
+            var response = await _http.PostAsJsonAsync(
+                "api/BackOffice/Aprendizaje/ListarUsuariosAprendizaje",
+                request);
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<UsuarioDto>>()
+                       ?? new List<UsuarioDto>();
+            }
+
+            return new List<UsuarioDto>(); 
+        }
+
+
         public async Task<ResponseTransacciones?> AsignarTareas(string token, List<CreaTareaDTO> creaTareaDTOs)
         {
             _http.DefaultRequestHeaders.Authorization =
