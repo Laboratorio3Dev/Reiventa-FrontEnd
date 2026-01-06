@@ -24,7 +24,7 @@ namespace WebEncuestaRespuesta.Pages.NPS.Encuesta
         public async Task<IActionResult> OnGetAsync()
         {
             if (string.IsNullOrWhiteSpace(EncuestaEncriptada))
-                return Redirect("/NPS/Encuesta/noExiste"); 
+                return Redirect("/ExperienciaCliente/NPS/Encuesta/noExiste"); 
 
             var enc = EncuestaEncriptada.Trim().Replace(" ", "+");
 
@@ -35,30 +35,30 @@ namespace WebEncuestaRespuesta.Pages.NPS.Encuesta
             }
             catch
             {
-                return Redirect($"/NPS/Encuesta/noExiste");
+                return Redirect($"/ExperienciaCliente/NPS/Encuesta/noExiste");
             }
 
             if (encuesta == null)
-                return Redirect($"/NPS/Encuesta/noExiste");
+                return Redirect($"/ExperienciaCliente/NPS/Encuesta/noExiste");
 
             if (encuesta.FlagLogin == false && encuesta.FlagBase == false)
             {
-                return Redirect($"/NPS/Encuesta/Responder?encuesta={Uri.EscapeDataString(enc)}");
+                return Redirect($"/ExperienciaCliente/NPS/Encuesta/Responder?encuesta={Uri.EscapeDataString(enc)}");
             }
             else if ((encuesta.FlagLogin || encuesta.FlagBase) && string.IsNullOrWhiteSpace(UsuarioEncriptado))
             {
-                return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
+                return Redirect($"/ExperienciaCliente/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
             }
             if (!string.IsNullOrWhiteSpace(UsuarioEncriptado))
             {
-                return Redirect($"/NPS/Encuesta/responder?encuesta={Uri.EscapeDataString(enc)}&u={Uri.EscapeDataString(UsuarioEncriptado)}");
+                return Redirect($"/ExperienciaCliente/NPS/Encuesta/responder?encuesta={Uri.EscapeDataString(enc)}&u={Uri.EscapeDataString(UsuarioEncriptado)}");
             }
             if (encuesta.FlagLogin)
             {
-                return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
+                return Redirect($"/ExperienciaCliente/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
             }
 
-            return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
+            return Redirect($"/ExperienciaCliente/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
         }
     }
 }

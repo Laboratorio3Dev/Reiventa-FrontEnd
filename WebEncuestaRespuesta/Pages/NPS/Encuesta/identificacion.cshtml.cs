@@ -82,7 +82,7 @@ namespace WebEncuestaRespuesta.Pages.NPS.Encuesta
             }
 
             usuarioToken = usuarioToken.Trim().Replace(" ", "+");
-            return Redirect($"/NPS/Encuesta/responder?encuesta={Uri.EscapeDataString(encuestaToken)}&u={usuarioToken}");
+            return Redirect($"/ExperienciaCliente/NPS/Encuesta/responder?encuesta={Uri.EscapeDataString(encuestaToken)}&u={usuarioToken}");
         }
     }
 }
