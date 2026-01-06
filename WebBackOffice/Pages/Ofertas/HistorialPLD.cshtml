@@ -1,4 +1,4 @@
-﻿@page
+﻿@page "{p:int?}"
 @model WebBackOffice.Pages.Ofertas.HistorialPLDModel
 @{
     ViewData["Title"] = "Historial de Consultas";
@@ -13,28 +13,45 @@
 
         <div class="form-group">
             <label>Usuario</label>
-            <input asp-for="FiltroUsuario" class="form-control" placeholder="Usuario" />
+            <input asp-for="FiltroUsuario"
+                   class="form-control"
+                   placeholder="Usuario" />
         </div>
 
         <div class="form-group">
             <label>Fecha inicio</label>
-            <input asp-for="FechaInicio" type="date" class="form-control" />
+            <input asp-for="FechaInicioCombo"
+                   type="date"
+                   class="form-control" />
         </div>
 
         <div class="form-group">
             <label>Fecha fin</label>
-            <input asp-for="FechaFin" type="date" class="form-control" />
+            <input asp-for="FechaFinCombo"
+                   type="date"
+                   class="form-control" />
         </div>
 
-        <div class="form-group actions">
-            <button type="submit" class="btn btn-primary">
-                🔍 Buscar
-            </button>
-        </div>
+        <!-- ACCIONES -->
+        
 
+    </div><br />
+    <div class="form-group actions">
+        <button type="submit"
+                class="btn btn-primary btn-search">
+            🔍 Buscar
+        </button>
+
+        <button type="button"
+                class="btn btn-outline-primary"
+                data-bs-toggle="modal"
+                data-bs-target="#modalEstadisticas">
+            📊 Ver estadísticas
+        </button>
     </div>
-
 </form>
+
+
 
 <!-- RESULTADOS -->
 @if (Model.Resultados != null && Model.Resultados.Any())
@@ -55,24 +72,190 @@
                     <tr>
                         <td>@item.Documento</td>
                         <td>@item.Usuario</td>
-                        <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                        <td>@item.Fecha.ToString()</td>
                         <td>
-                            @if (item.EsCliente)
+                            @if (item.FlagBase == "SI")
                             {
-                                <span class="badge success">Sí</span>
+                                <span class="badge badge-proceso">Sí</span>
                             }
                             else
                             {
-                                <span class="badge danger">No</span>
+                                <span class="badge badge-atrasada">No</span>
                             }
                         </td>
                     </tr>
                 }
             </tbody>
         </table>
+        @if (Model.TotalRegistros > 0)
+        {
+            <div class="pagination-container">
+                <span>
+                    Mostrando
+                    @((Model.Page - 1) * Model.PageSize + 1)
+                    –
+                    @(Math.Min(Model.Page * Model.PageSize, Model.TotalRegistros))
+                    de @Model.TotalRegistros
+                </span>
+
+                <div class="pagination">
+
+                    <a asp-route-p="@(Model.Page - 1)"
+                       asp-route-FiltroUsuario="@Model.FiltroUsuario"
+                       asp-route-FechaInicio="@Model.FechaInicioCombo"
+                       asp-route-FechaFin="@Model.FechaFinCombo"
+                       class="page-btn @(Model.Page == 1 ? "disabled" : "")">«</a>
+
+                    @for (int i = 1; i <= Model.TotalPaginas; i++)
+                    {
+                        <a asp-route-p="@i"
+                           asp-route-FiltroUsuario="@Model.FiltroUsuario"
+                           asp-route-FechaInicio="@Model.FechaInicioCombo"
+                           asp-route-FechaFin="@Model.FechaFinCombo"
+                           class="page-btn @(i == Model.Page ? "active" : "")">
+                            @i
+                        </a>
+                    }
+
+                    <a asp-route-p="@(Model.Page + 1)"
+                       asp-route-FiltroUsuario="@Model.FiltroUsuario"
+                       asp-route-FechaInicio="@Model.FechaInicioCombo"
+                       asp-route-FechaFin="@Model.FechaFinCombo"
+                       class="page-btn @(Model.Page == Model.TotalPaginas ? "disabled" : "")">»</a>
+
+                </div>
+            </div>
+        }
+
     </div>
 }
-else if (Model.BusquedaRealizada)
+
+@if (Model.TotalRegistros==0)
 {
     <p class="no-results">No se encontraron resultados.</p>
 }
+
+<div class="modal fade" id="modalEstadisticas" tabindex="-1">
+    <div class="modal-dialog modal-xl modal-dialog-centered">
+        <div class="modal-content">
+
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Estadísticas de consultas</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row text-center">
+                    <div class="col-md-6">
+                        <h6>Consultas por Usuario</h6>
+                        <canvas id="chartPorUsuario"></canvas>
+                    </div>
+
+                    <div class="col-md-6">
+                        <h6>Está en la Base / No Está en la Base</h6>
+                        <canvas id="chartCliente"></canvas>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    const dataResultados = @Html.Raw(
+                System.Text.Json.JsonSerializer.Serialize(Model.Resultados)
+        );
+
+   
+     function calcularPorcentaje(valor, total) {
+        return ((valor / total) * 100).toFixed(1) + '%';
+    }
+
+    let chartUsuario;
+     let chartCliente;
+
+     document.getElementById('modalEstadisticas')
+         .addEventListener('shown.bs.modal', () => {
+
+             /* ===============================
+                GRAFICO 1: POR USUARIO
+             =============================== */
+             const porUsuario = {};
+             dataResultados.forEach(x => {
+                 porUsuario[x.Usuario] = (porUsuario[x.Usuario] || 0) + 1;
+             });
+
+             const totalUsuario = Object.values(porUsuario)
+                 .reduce((a, b) => a + b, 0);
+
+             chartUsuario?.destroy();
+             chartUsuario = new Chart(
+                 document.getElementById('chartPorUsuario'),
+                 {
+                     type: 'pie',
+                     data: {
+                         labels: Object.keys(porUsuario),
+                         datasets: [{
+                             data: Object.values(porUsuario)
+                         }]
+                     },
+                     options: {
+                         plugins: {
+                             tooltip: {
+                                 callbacks: {
+                                     label: ctx => {
+                                         const valor = ctx.raw;
+                                         return `${ctx.label}: ${valor} (${calcularPorcentaje(valor, totalUsuario)})`;
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             );
+
+             /* ===============================
+                GRAFICO 2: CLIENTE SI / NO
+             =============================== */
+             let totalSi = 0;
+             let totalNo = 0;
+
+             dataResultados.forEach(x => {
+                 if ((x.FlagBase || '').toUpperCase() === 'SI') {
+                     totalSi++;
+                 } else {
+                     totalNo++;
+                 }
+             });
+
+             const totalCliente = totalSi + totalNo;
+
+             chartCliente?.destroy();
+             chartCliente = new Chart(
+                 document.getElementById('chartCliente'),
+                 {
+                     type: 'pie',
+                     data: {
+                         labels: ['SI', 'NO'],
+                         datasets: [{
+                             data: [totalSi, totalNo]
+                         }]
+                     },
+                     options: {
+                         plugins: {
+                             tooltip: {
+                                 callbacks: {
+                                     label: ctx => {
+                                         const valor = ctx.raw;
+                                         return `${ctx.label}: ${valor} (${calcularPorcentaje(valor, totalCliente)})`;
+                                     }
+                                 }
+                             }
+                         }
+                     }
+                 }
+             );
+         });
+</script>
