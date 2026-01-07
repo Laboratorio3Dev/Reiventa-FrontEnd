@@ -648,6 +648,10 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
                 if (formModel?.FechaFin == null || formModel.FechaFin == default)
                     formModel.FechaFin = sessionModel.FechaFin;
+                if ((ImagenLoginFile == null || ImagenLoginFile.Length == 0) && sessionModel.ImagenLogin != null && sessionModel.ImagenLogin.Length > 0)
+                {
+                    formModel.ImagenLogin = sessionModel.ImagenLogin;
+                }
                 if (formModel.FlagBase)
                 {
                     if (BaseFile != null && BaseFile.Length > 0)
@@ -673,7 +677,6 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                     clientesEncuesta = new List<ClienteEncuestaDto>();
                     SetSession("NPS_clientesEncuesta", clientesEncuesta);
                 }
-                // IMPORTANTE: IdEncuesta en edición si no vino del POST
                 if (formModel.IdEncuesta <= 0 && sessionModel.IdEncuesta > 0)
                     formModel.IdEncuesta = sessionModel.IdEncuesta;
                 preguntasDisponibles = GetSession("NPS_preguntasDisponibles", new List<PreguntaResponse>());
@@ -681,19 +684,12 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                 clientesEncuesta = GetSession("NPS_clientesEncuesta", new List<ClienteEncuestaDto>());
                 esEdicion = GetSession("NPS_esEdicion", false);
 
-                // ✅ migración de OnFileSelected: si viene archivo, lo guardamos como bytes en formModel.ImagenLogin
                 if (ImagenLoginFile != null && ImagenLoginFile.Length > 0)
                 {
                     using var ms = new MemoryStream();
                     await ImagenLoginFile.CopyToAsync(ms);
                     formModel.ImagenLogin = ms.ToArray();
                 }
-
-                // ✅ migración de OnBaseFileSelected: si viene excel/csv, aquí deberías parsearlo (aspire)
-                // OJO: tu lógica original era con Aspose.Cells en Blazor. Aquí se puede hacer igual.
-                // Por ahora, si BaseFile viene y quieres el mismo parseo, dime y lo pego tal cual con Aspose.
-                // (No lo incluyo completo aquí para no romperte dependencias si no está instalado.)
-                // clientesEncuesta = ...; SetSession(...)
 
                 if (esEdicion)
                 {
@@ -731,13 +727,14 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                         DatosEncuesta = new ActualizaEncuestaDTO
                         {
                             IdEncuesta = formModel.IdEncuesta,
-                            FechaInicio=DateTime.Parse(formModel.FechaInicio.ToString()!),
+                            FechaInicio = DateTime.Parse(formModel.FechaInicio.ToString()!),
                             FechaFin = DateTime.Parse(formModel.FechaFin.ToString()!),
                             FlagLogin = formModel.FlagLogin,
                             FlagBase = formModel.FlagBase,
                             ImagenLogin = formModel.ImagenLogin,
                             TituloEncuesta = formModel.TituloEncuesta,
-                            NombreEncuesta= formModel.NombreEncuesta
+                            NombreEncuesta = formModel.NombreEncuesta,
+
                         },
                         EncuestaPreguntas = listadoPreguntas,
                         NPS_ClienteEncuesta = clientesEncuesta,
@@ -1206,6 +1203,43 @@ namespace WebBackOffice.Pages.NPS.Encuesta
             var bytes = package.GetAsByteArray();
             var fileName = $"BaseCargada_{DateTime.Now:yyyyMMddHHmmss}.xlsx";
             return File(bytes, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", fileName);
+        }
+        public async Task<IActionResult> OnGetLoginImage(int idEncuesta)
+        {
+            // si no hay sesión/token, no se puede pedir al API
+            token = HttpContext.Session.GetString("Token");
+            if (string.IsNullOrWhiteSpace(token))
+                return Unauthorized();
+
+            // trae la encuesta y su imagen (ajusta si tienes un endpoint directo)
+            var lista = await ServiceRepositorio.ObtenerEncuestas(token, "");
+            var encuesta = lista.FirstOrDefault(x => x.IdEncuesta == idEncuesta);
+
+            var bytes = encuesta?.ImagenLogin;
+            if (bytes == null || bytes.Length == 0)
+                return NotFound();
+
+            // detectar content-type simple
+            var contentType = GetImageContentType(bytes);
+            return File(bytes, contentType);
+        }
+
+        private static string GetImageContentType(byte[] bytes)
+        {
+            // PNG
+            if (bytes.Length >= 8 &&
+                bytes[0] == 0x89 && bytes[1] == 0x50 && bytes[2] == 0x4E && bytes[3] == 0x47)
+                return "image/png";
+
+            // JPG
+            if (bytes.Length >= 3 && bytes[0] == 0xFF && bytes[1] == 0xD8)
+                return "image/jpeg";
+
+            // GIF
+            if (bytes.Length >= 3 && bytes[0] == 0x47 && bytes[1] == 0x49 && bytes[2] == 0x46)
+                return "image/gif";
+
+            return "application/octet-stream";
         }
     }
 }
