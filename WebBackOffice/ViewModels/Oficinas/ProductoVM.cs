@@ -12,5 +12,7 @@
         public string Asunto { get; set; }
 
         public bool Seleccionado { get; set; }
+        public bool Activo { get; set; }
+        
     }
 }
