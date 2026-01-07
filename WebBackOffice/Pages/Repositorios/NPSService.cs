@@ -14,7 +14,6 @@ namespace WebBackOffice.Pages.Repositorios
             _http = http.CreateClient("ApiClient");
         }
 
-        // ✅ Centraliza Bearer (evita olvidos y detecta token vacío)
         private void EnsureBearer(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
@@ -99,7 +98,6 @@ namespace WebBackOffice.Pages.Repositorios
                 $"api/NPS/Encuesta/ExportarRespuestas?idEncuesta={idEncuesta}");
         }
 
-        // ✅ IMPORTANTE: estos métodos ahora reciben token y seteamos Bearer antes del POST
 
         public async Task<ResponseTransacciones?> CrearEncuesta(string token, CrearEncuestaDTO request)
         {

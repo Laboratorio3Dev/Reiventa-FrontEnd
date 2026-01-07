@@ -79,7 +79,6 @@ namespace WebEncuestaRespuesta.Pages.Repositorios
                 var response = await _http.GetFromJsonAsync<ValidacionClienteEncuestaResult>($"{url}?encuesta={Uri.EscapeDataString(encuestaEncriptada)}&u={Uri.EscapeDataString(usuarioEncriptado)}");
 
 
-
                 return response ?? new ValidacionClienteEncuestaResult
                 {
                     Existe = false,
@@ -160,6 +159,7 @@ namespace WebEncuestaRespuesta.Pages.Repositorios
             catch (Exception ex)
             {
                 Console.WriteLine($"Error general: {ex.Message}");
+                return null;
             }
 
             return resultado;

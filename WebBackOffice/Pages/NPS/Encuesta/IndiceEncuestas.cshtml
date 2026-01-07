@@ -131,9 +131,9 @@
     else
     {
         <!-- Tabla desktop -->
-        <div class="table-responsive shadow rounded-3 overflow-hidden d-none d-md-block" style="max-height: 600px;">
+        <div>
             <table class="table table-striped align-middle mb-0">
-                <thead class="bg-gradient-primary text-white sticky-top">
+                <thead class="sticky-top ">
                     <tr class="text-center">
                         <th>Nombre</th>
                         <th>Tipo Persona</th>
@@ -252,7 +252,6 @@
                                         </button>
                                     </form>
 
-                                    <!-- Copiar link: lo hacemos con JS directo para no postear -->
                                     <button type="button" class="btn btn-sm btn-outline-secondary" title="Copiar link"
                                             onclick="copyToClipboard('@(e.Link ?? "")'); alert('Link copiado al portapapeles');">
                                         <i class="bi bi-link-45deg"></i>
@@ -397,7 +396,6 @@
         <div class="modal-dialog modal-dialog-centered modal-lg">
             <div class="modal-content border-0 shadow-lg rounded-4">
 
-                <!-- ✅ UN SOLO FORM (sin forms anidados) -->
                 <form id="frmEncuesta" method="post" enctype="multipart/form-data">
                     <input type="hidden" id="IdPregunta" name="TempId" value="" />
                     <input type="hidden" name="formModel.IdEncuesta" value="@Model.formModel.IdEncuesta" />
@@ -406,7 +404,6 @@
                             @(Model.modoModal == "editar" ? "Editar Encuesta" : "Nueva Encuesta")
                         </h5>
 
-                        <!-- ✅ Cerrar sin form interno -->
                         <button type="submit"
                                 class="btn-close btn-close-black"
                                 aria-label="Close"
@@ -465,7 +462,6 @@
                             }
 
                             <div class="col-md-4 form-check form-switch">
-                                <!-- Siempre manda algo -->
                                 <input type="checkbox"
                                        class="form-check-input"
                                        id="chkLogin"
@@ -482,7 +478,6 @@
                             }
 
                             <div class="col-md-4 form-check form-switch">
-                                <!-- Siempre manda algo -->
                                 <input type="checkbox"
                                        class="form-check-input"
                                        id="chkBase"
@@ -524,7 +519,6 @@
 
                             @if (!Model.EncuestaConRespuestas && !Model.EsSoloLectura)
                             {
-                                <!-- ✅ Crear Pregunta: MISMO form -->
                                 <button class="btn btn-sm btn-success" type="submit" formaction="?handler=AbrirModalPregunta">
                                     <i class="bi bi-plus-circle me-1"></i> Crear Pregunta
                                 </button>
@@ -610,8 +604,7 @@
                                 <i class="bi bi-save me-1"></i> Guardar
                             </button>
                         }
-
-                        @if (!Model.EsSoloLectura && Model.preguntasDisponibles.Any())
+                        @if (!Model.EsSoloLectura && Model.preguntasDisponibles.Any() && Model.formModel.IdEncuesta > 0)
                         {
                             <button class="btn btn-warning" type="submit" formaction="?handler=AbrirVistaPrevia">
                                 <i class="bi bi-eye me-1"></i> Vista Previa
@@ -867,39 +860,58 @@
     </div>
 }
 
-@if (Model.mostrarModalVistaPrevia)
-{
-    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);"
-         onclick="document.getElementById('btnCerrarVista').click();">
+    @if (Model.mostrarModalVistaPrevia)
+    {
+        <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);"
+             onclick="document.getElementById('btnCerrarVista').click();">
 
-        <div class="modal-dialog modal-dialog-centered modal-fullscreen-sm-down modal-xl"
-             onclick="event.stopPropagation();">
-            <div class="modal-content rounded-3 shadow-lg" style="overflow:hidden;">
-                <div class="modal-header bg-primary text-white">
-                    <h5 class="modal-title">Vista previa web</h5>
-                    <form method="post" class="m-0">
-                        <input type="hidden" name="currentPage" value="@Model.currentPage" />
-                        <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
-                        <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
-                        <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
-                        <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
-                        <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
-                        <button id="btnCerrarVista" type="submit" class="btn-close" formaction="?handler=CerrarVistaPrevia"></button>
-                    </form>
-                </div>
+            <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down modal-xl"
+                 onclick="event.stopPropagation();">
 
-                <div class="modal-body" style="background-color: var(--color-bg-cyan-light);">
-                    <!-- En Razor no puedes usar el componente Blazor <Preview ...>.
-                         O lo pasas a Partial/ViewComponent, o lo pones en un iframe a una ruta MVC/Razor.
-                         Aquí lo dejo como placeholder: -->
-                    <iframe class="w-100" style="height:70vh; border:0;"
-                            src="/Encuesta/Preview/@Model.IdEncuestaSeleccionada"></iframe>
+                <div class="modal-content rounded-3 shadow-lg preview-modal">
+                    <div class="modal-header bg-primary text-white">
+                        <h5 class="modal-title">Vista previa web</h5>
+                        <form method="post" class="m-0">
+                            <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                            <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                            <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                            <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                            <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                            <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+                            <button id="btnCerrarVista" type="submit" class="btn-close" formaction="?handler=CerrarVistaPrevia"></button>
+                        </form>
+                    </div>
+
+                    <div class="modal-body p-0 preview-body" style="background-color: var(--color-bg-cyan-light);">
+                        <iframe class="w-100 preview-iframe"
+                                src="/Encuesta/Preview/@Model.IdEncuestaSeleccionada"></iframe>
+                    </div>
                 </div>
 
             </div>
         </div>
-    </div>
-}
+    }
+
+    <style>
+        /* Solo para este modal */
+        .preview-modal {
+            display: flex;
+            flex-direction: column;
+            height: 90vh; /* ajusta si quieres más/menos alto */
+        }
+
+        .preview-body {
+            flex: 1 1 auto;
+            overflow: auto; /* el scroll vive aquí */
+        }
+
+        .preview-iframe {
+            border: 0;
+            height: 100%;
+            display: block;
+        }
+    </style>
+
 
 @if (Model.isLoading)
 {

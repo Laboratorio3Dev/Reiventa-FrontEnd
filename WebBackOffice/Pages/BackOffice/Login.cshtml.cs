@@ -73,7 +73,7 @@ public class LoginModel : PageModel
                 principal
             );
 
-            return RedirectToPage("/Aprendizaje/Dashboard");
+            return RedirectToPage(response.PaginaPrincipal);
         }
 
         ErrorMessage = response.ErrorMessage;
