@@ -501,10 +501,21 @@
 
                         <div id="loginImageContainer" class="mb-3" style="display:none">
                             <label class="form-label">Imagen para Login</label>
+
+                            <!-- Preview -->
+                            <div class="mb-2">
+                                <img id="loginImagePreview"
+                                     src="@(Model.formModel.IdEncuesta > 0 ? $"/Encuestas/NPS?handler=LoginImage&idEncuesta={Model.formModel.IdEncuesta}&v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}" : "")"
+                                     alt="Preview"
+                                     style="@(Model.formModel.IdEncuesta > 0 ? "display:inline-block; max-height:120px; width:auto; border-radius:8px;" : "display:none; max-height:120px; width:auto; border-radius:8px;")"
+                                     class="shadow-sm" />
+                            </div>
+
                             <input type="file"
                                    class="form-control"
-                                   name="LoginImage"
-                                   accept="image/*" />
+                                   asp-for="ImagenLoginFile"
+                                   accept="image/*"
+                                   id="ImagenLoginFileInput" />
                         </div>
 
                         <div id="baseFileContainer" class="mb-3" style="display:none">
@@ -961,4 +972,39 @@
 
     // ejecutar al cargar el modal
     document.addEventListener('DOMContentLoaded', toggleBaseAndLoginFields);
+</script>
+<script>
+    (function () {
+      const input = document.getElementById('ImagenLoginFileInput');
+      const img = document.getElementById('loginImagePreview');
+
+      if (!input || !img) return;
+
+      input.addEventListener('change', function () {
+        const file = this.files && this.files[0];
+
+        // si quitaron el archivo
+        if (!file) {
+          img.src = '';
+          img.style.display = 'none';
+          return;
+        }
+
+        // validación rápida: solo imágenes
+        if (!file.type.startsWith('image/')) {
+          alert('Por favor selecciona una imagen.');
+          this.value = '';
+          img.src = '';
+          img.style.display = 'none';
+          return;
+        }
+
+        const url = URL.createObjectURL(file);
+        img.src = url;
+        img.style.display = 'inline-block';
+
+        // libera memoria cuando cargue
+        img.onload = () => URL.revokeObjectURL(url);
+      });
+    })();
 </script>
