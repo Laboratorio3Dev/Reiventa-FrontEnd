@@ -289,19 +289,19 @@ function MuestraMensaje(pTitulo, pMensaje, pTipo) {
         $("#dvAlertaERROR_titulo").html(pTitulo);
         $("#dvAlertaERROR_msg").html(pMensaje);
         $("#dvAlertaERROR").show();
-        $("#dvAlertaERROR").delay(6000).fadeOut(300);
+        $("#dvAlertaERROR").delay(5000).fadeOut(200);
     }
     if (pTipo == "W") {
         $("#dvAlertaWARN_titulo").html(pTitulo);
         $("#dvAlertaWARN_msg").html(pMensaje);
         $("#dvAlertaWARN").show();
-        $("#dvAlertaWARN").delay(6000).fadeOut(300);
+        $("#dvAlertaWARN").delay(5000).fadeOut(200);
     }
     if (pTipo == "OK") {
         $("#dvAlertaOK_titulo").html(pTitulo);
         $("#dvAlertaOK_msg").html(pMensaje);
         $("#dvAlertaOK").show();
-        $("#dvAlertaOK").delay(6000).fadeOut(300);
+        $("#dvAlertaOK").delay(5000).fadeOut(200);
     }
 }
 

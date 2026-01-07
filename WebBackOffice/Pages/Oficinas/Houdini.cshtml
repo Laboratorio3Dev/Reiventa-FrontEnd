@@ -166,9 +166,12 @@
 
         // ✅ OK → enviar
         error.classList.add('d-none');
-
+        showLoading(); // 🔥 AQUÍ SE ACTIVA EL LOADING
         const form = document.getElementById('formPaso2');
-        form.submit(); // 🔥 ahora SÍ existe
+       
+        setTimeout(()=>{
+             form.submit(); // 🔥 ahora SÍ existe
+        },100);
     }
 </script>
 

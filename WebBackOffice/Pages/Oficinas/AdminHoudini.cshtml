@@ -72,56 +72,7 @@
             @await Html.PartialAsync("_TablaProductos", Model)
         </div>
 
-      @*   <div class="table-view">
-            <div class="table-responsive-custom">
-                <table class="custom-table">
-                    <thead >
-                        <tr class="text-center">
-                            <th>Título</th>
-                            <th>Sub Título</th>
-                            <th>Asunto</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var e in Model.PagedProductos)
-                        {
-                            <tr class="text-center">
-                                <td>@e.Titulo</td>
-                                <td>@e.SubTitulo</td>
-                                <td>@e.Asunto</td>
-                                <td>
-                                    <button class="btn btn-primary" onclick="editarProducto(@e.IdProducto)">
-                                        Editar
-                                    </button>
-                                    <button class="btn btn-sm btn-outline-danger"
-                                            onclick="desactivarProducto(@e.IdProducto)">
-                                        Desactivar
-                                    </button>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-       </div> *@
-
-        <!-- PAGINACIÓN -->
-        @* <div class="d-flex justify-content-between mt-3">
-            <button class="btn btn-outline-secondary"
-                    onclick="cambiarPagina(@(Model.CurrentPage - 1))"
-                    @(Model.CanGoPrevious ? "" : "disabled")>
-                Anterior
-            </button>
-
-            <span>Página @Model.CurrentPage de @Model.TotalPages</span>
-
-            <button class="btn btn-outline-secondary"
-                    onclick="cambiarPagina(@(Model.CurrentPage + 1))"
-                    @(Model.CanGoNext ? "" : "disabled")>
-                Siguiente
-            </button>
-        </div> *@
+    
 
     }
 </div>
@@ -159,7 +110,7 @@
 
                         <div class="col-md-6">
                             <label for="Asunto">Asunto</label>
-                            <input id="Asunto" name="Asunto" class="form-control required" placeholder="Ej: Hola {Nombre}, tu producto está listo" />
+                            <input id="Asunto" name="Asunto" class="form-control" placeholder="Ej: Hola {Nombre}, tu producto está listo" />
                             <small class="text-muted d-block mt-1">
                                 <i class="bi bi-info-circle"></i>
                                 Usa <strong>{Nombre}</strong> para mostrar el nombre del cliente.
@@ -290,7 +241,8 @@
 
         } catch (err) {
             console.error(err);
-            mostrarMensaje('Error inesperado', 'danger');
+            
+             MuestraMensaje("ERROR.","Error inesperado", "E")
         } 
     }
 
@@ -301,22 +253,70 @@
      }
 
      
-    function desactivarProducto(id) {
-        if (!confirm('¿Desactivar este producto?')) return;
+    // function desactivarProducto(id) {
+    //     if (!confirm('¿Desactivar este producto?')) return;
 
-        fetch(`/api/Oficinas/AdminHoudini/Desactivar/${id}`, {
-            method: 'PATCH'
+    //     fetch(`/api/Oficinas/AdminHoudini/Desactivar/${id}`, {
+    //         method: 'PATCH'
+    //     })
+    //     .then(r => r.json())
+    //     .then(data => {
+    //         alert(data.message);
+    //         if (data.isSuccess) {
+    //             cambiarPagina(1);
+    //         }
+    //     });
+    // }
+
+     function cambiarEstado(id, activar) {
+        const texto = activar ? 'activar' : 'desactivar';
+
+        if (!confirm(`¿Deseas ${texto} este producto?`)) return;
+
+        showLoading();
+
+        fetch(`?handler=CambiarEstadoProducto`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken':
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                idProducto: id,
+                activar: activar
+            })
         })
         .then(r => r.json())
         .then(data => {
-            alert(data.message);
-            if (data.isSuccess) {
-                cambiarPagina(1);
+            if (!data.isSuccess) {
+                mostrarMensaje(data.message, 'danger');
+                return;
             }
+
+            // 🔁 Cambiar botón dinámicamente
+            const btn = document.getElementById(`btn-estado-${id}`);
+
+            if (activar) {
+                btn.className = 'btn btn-outline-danger btn-sm';
+                btn.innerText = 'Desactivar';
+                btn.onclick = () => cambiarEstado(id, false);
+            } else {
+                btn.className = 'btn btn-outline-success btn-sm';
+                btn.innerText = 'Activar';
+                btn.onclick = () => cambiarEstado(id, true);
+            }
+           MuestraMensaje("CORRECTO.", data.message, "OK")
+         
+        })
+        .catch(() => {
+           MuestraMensaje("ERROR.","Error inesperado", "E")
+        })
+        .finally(() => {
+            hideLoading();
         });
     }
 
-  
     function desactivarProducto(id) {
         if (!confirm('¿Deseas desactivar este producto?')) return;
 
@@ -341,7 +341,35 @@
             mostrarMensaje('Error inesperado', 'danger');
         });
     }
-    
+
+
+        async function activarProducto(id) {
+        if (confirm("¿Estás seguro de que deseas activar este producto?")) {
+
+
+        fetch(`?handler=DesactivarProducto&id=${id}`, {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken':
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            mostrarMensaje(data.message, data.isSuccess ? 'success' : 'danger');
+
+            if (data.isSuccess) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            }
+        })
+        .catch(() => {
+            mostrarMensaje('Error inesperado', 'danger');
+        });
+        }
+    }
+
 
     async function cambiarPagina(page) {
         const search = document.querySelector('[name="SearchTerm"]')?.value || '';

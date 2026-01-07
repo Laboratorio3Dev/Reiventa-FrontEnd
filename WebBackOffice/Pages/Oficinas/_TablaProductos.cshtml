@@ -21,10 +21,24 @@
                             onclick="editarProducto(@e.IdProducto)">
                         Editar
                     </button>
-                    <button class="btn btn-outline-danger"
-                            onclick="desactivarProducto(@e.IdProducto)">
-                        Desactivar
-                    </button>
+
+                    @if (e.Activo)
+                    {
+                        <button class="btn btn-outline-success btn-sm"
+                                id="btn-estado-@e.IdProducto"
+                                onclick="cambiarEstado(@e.IdProducto, true)">
+                            Activar
+                        </button>
+                    }
+                    else
+                    {
+                        <button class="btn btn-outline-danger btn-sm"
+                                 id="btn-estado-@e.IdProducto"
+                                 onclick="cambiarEstado(@e.IdProducto, false)">
+                            Desactivar
+                        </button>
+                        
+                    }
                 </td>
             </tr>
         }

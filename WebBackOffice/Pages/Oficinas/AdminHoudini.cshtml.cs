@@ -11,10 +11,7 @@ namespace WebBackOffice.Pages.Oficinas
 {
     public class AdminHoudiniModel : PageModel
     {
-        bool mostrarModal = false;
-        string modoModal = "nuevo"; // nuevo | editar
-        bool EsSoloLectura => modoModal == "ver";
-        ProductoVM formModel;
+       
         private readonly AdminHoudiniServices _service;
    
         public AdminHoudiniModel(AdminHoudiniServices service)
@@ -49,15 +46,7 @@ namespace WebBackOffice.Pages.Oficinas
                 });
 
             var token = HttpContext.Session.GetString("Token");
-            // 🔒 Regla de negocio: {Nombre} obligatorio
-            if (!producto.Asunto.Contains("{Nombre}"))
-            {
-                return new JsonResult(new ResponseTransacciones
-                {
-                    IsSuccess = false,
-                    Message = "El asunto debe contener el texto {Nombre}"
-                });
-            }
+         
             ResponseTransacciones response;
 
             if (producto.IdProducto.HasValue)
@@ -84,27 +73,27 @@ namespace WebBackOffice.Pages.Oficinas
             return new JsonResult(producto);
         }
 
-        public async Task<IActionResult> OnPostDesactivarProductoAsync(int id)
-        {
-            var token = HttpContext.Session.GetString("Token");
+        //public async Task<IActionResult> OnPostDesactivarProductoAsync(int id)
+        //{
+        //    var token = HttpContext.Session.GetString("Token");
 
-            if (string.IsNullOrEmpty(token))
-            {
-                return new JsonResult(new
-                {
-                    isSuccess = false,
-                    message = "Sesión expirada"
-                });
-            }
+        //    if (string.IsNullOrEmpty(token))
+        //    {
+        //        return new JsonResult(new
+        //        {
+        //            isSuccess = false,
+        //            message = "Sesión expirada"
+        //        });
+        //    }
 
-            var response = await _service.DesactivarProducto(token, id);
+        //    var response = await _service.DesactivarProducto(token, id);
 
-            return new JsonResult(new
-            {
-                isSuccess = response.IsSuccess,
-                message = response.Message
-            });
-        }
+        //    return new JsonResult(new
+        //    {
+        //        isSuccess = response.IsSuccess,
+        //        message = response.Message
+        //    });
+        //}
 
         public async Task<PartialViewResult> OnGetTablaProductosAsync(
       int pageNumber,
@@ -143,11 +132,25 @@ namespace WebBackOffice.Pages.Oficinas
                      IdProducto = p.IdProducto,
                      Titulo = p.Titulo,
                      SubTitulo = p.SubTitulo,
-                     Asunto = p.Asunto
+                     Asunto = p.Asunto,
+                     Activo = p.Activo
                  })
                 .ToList();
         }
 
+        public async Task<IActionResult> OnPostCambiarEstadoProductoAsync(
+    [FromBody] CambiarEstadoRequest request)
+        {
+            var token = HttpContext.Session.GetString("Token");
+
+            var response = await _service.CambiarEstadoProducto(
+                token,
+                request.IdProducto,
+                request.Activar
+            );
+
+            return new JsonResult(response);
+        }
 
     }
 }
