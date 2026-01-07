@@ -85,16 +85,24 @@ namespace WebBackOffice.Pages.Repositorios
 
 
 
-        public async Task<ResponseTransacciones> DesactivarProducto(
-                string token,
-                int idProducto)
+
+    public async Task<ResponseTransacciones> CambiarEstadoProducto(
+    string token,
+    int idProducto,
+    bool activar)
         {
             _http.DefaultRequestHeaders.Authorization =
                 new AuthenticationHeaderValue("Bearer", token);
 
-            var response = await _http.PatchAsync(
-                $"api/Oficinas/AdminHoudini/Desactivar/{idProducto}",
-                null
+            var payload = new
+            {
+                IdProducto = idProducto,
+                Activar = activar
+            };
+
+            var response = await _http.PostAsJsonAsync(
+                "api/Oficinas/AdminHoudini/CambiarEstado",
+                payload
             );
 
             if (!response.IsSuccessStatusCode)
@@ -102,15 +110,14 @@ namespace WebBackOffice.Pages.Repositorios
                 return new ResponseTransacciones
                 {
                     IsSuccess = false,
-                    Message = "Error al desactivar el producto"
+                    Message = "Error al cambiar el estado del producto"
                 };
             }
 
             return await response.Content
                 .ReadFromJsonAsync<ResponseTransacciones>();
         }
+
+
     }
-
-
-
 }

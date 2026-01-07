@@ -1,0 +1,108 @@
+﻿@page
+@model WebBackOffice.Pages.Oficinas.CargaRetencionHipotecariaModel
+
+ @{
+    ViewData["Title"] = "Carga Retención";
+}
+
+
+<h3>Carga masiva de Retenciones</h3>
+
+<form id="frmExcel" enctype="multipart/form-data">
+    @Html.AntiForgeryToken()
+    <div class="mb-3">
+        <label for="archivoExcel" class="form-label">Archivo Excel</label>
+        <input type="file"
+               name="Archivo"
+               id="archivoExcel"
+               class="form-control required"
+               accept=".xlsx,.xls" />
+    </div>
+    <small class="text-muted d-block mt-2">
+        El archivo debe contener:
+        <br />• Columna A: NRODOCUMENTO
+        <br />• Columna B: TASA
+    </small>
+    <button  type="button" class="btn btn-primary" onclick="subirExcel()">
+        <i class="bi bi-upload me-1"></i> Cargar archivo
+    </button>
+</form>
+
+
+
+<script>
+
+
+
+    async  function subirExcel() {
+        const fileInput = document.getElementById('archivoExcel');
+
+        // if (!fileInput.files.length) {
+        //     MuestraMensaje("ERROR.",'Seleccione un archivo Excel', "E");
+        //     return;
+        // }
+        if (!ValidarFormulario("frmExcel")) {
+            return;
+        }
+        try {
+             const formData = new FormData(
+                document.getElementById('frmExcel')
+            );
+
+             const data = await fetchConLoading(
+                    '?handler=CargarExcel',
+                    {
+                        method: 'POST',
+                        body: formData
+                    }
+                );
+
+            if (!data.isSuccess) {
+              
+                MuestraMensaje("ERROR.", data.message, "E")
+                return;
+            }
+           document.getElementById('archivoExcel').value= '';
+            MuestraMensaje("CORRECTO.", data.message, "OK")
+         
+
+
+        } catch (err) {
+            console.error(err);
+
+             MuestraMensaje("ERROR.","Error inesperado", "E")
+        }
+
+
+        // showLoading();
+        //  const formData = new FormData(
+        //     document.getElementById('frmExcel')
+        // );
+
+        // fetch('?handler=CargarExcel', {
+        //     method: 'POST',
+        //     body: formData
+        // })
+        // .then(r => r.json())
+        // .then(data => {
+           
+
+        //     if (!data.isSuccess) {
+      
+        //         MuestraMensaje("ERROR.", data.message, "E")
+        //         return;
+        //     }
+        //     MuestraMensaje("CORRECTO.", data.message, "OK")
+        // })
+        // .catch(() => {
+      
+        //       MuestraMensaje("ERROR.", 'Error cargando archivo', "E")
+        // });
+
+        //  hideLoading();
+
+
+    }
+
+  
+</script>
