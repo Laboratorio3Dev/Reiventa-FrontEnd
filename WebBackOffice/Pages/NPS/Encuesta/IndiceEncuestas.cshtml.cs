@@ -731,11 +731,13 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                         DatosEncuesta = new ActualizaEncuestaDTO
                         {
                             IdEncuesta = formModel.IdEncuesta,
+                            FechaInicio=DateTime.Parse(formModel.FechaInicio.ToString()!),
                             FechaFin = DateTime.Parse(formModel.FechaFin.ToString()!),
                             FlagLogin = formModel.FlagLogin,
                             FlagBase = formModel.FlagBase,
                             ImagenLogin = formModel.ImagenLogin,
-                            TituloEncuesta = formModel.TituloEncuesta
+                            TituloEncuesta = formModel.TituloEncuesta,
+                            NombreEncuesta= formModel.NombreEncuesta
                         },
                         EncuestaPreguntas = listadoPreguntas,
                         NPS_ClienteEncuesta = clientesEncuesta,

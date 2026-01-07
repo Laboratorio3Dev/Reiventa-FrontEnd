@@ -57,21 +57,21 @@ namespace WebBackOffice.Pages.NPS.Encuesta
             }
 
             if (Encuesta == null)
-                return Redirect($"/NPS/Encuesta/noExiste");
+                return Redirect(Url.Content("~/NPS/Encuesta/noExiste"));
 
            if ((Encuesta.FlagLogin || Encuesta.FlagBase) && string.IsNullOrWhiteSpace(usuarioEncriptado))
             {
-                return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaEnctriptada)}");
+                return Redirect(Url.Content($"~/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaEnctriptada)}"));
             }
 
             if ((Encuesta.FlagLogin || Encuesta.FlagBase) && !string.IsNullOrWhiteSpace(usuarioEncriptado))
             {
                var existe = await ServiceRepositorio.validarClienteEncuesta(usuarioEncriptado, encuestaEnctriptada);
                 if (existe.Existe && existe.YaRespondio)
-                    return Redirect("/NPS/Encuesta/Agradecimiento");
+                    return Redirect(Url.Content($"~/NPS/Encuesta/Agradecimiento"));
                 else if (!existe.Existe)
                 {
-                    return Redirect("/NPS/Encuesta/noIdentificado");
+                    return Redirect(Url.Content($"~/NPS/Encuesta/noIdentificado"));
                 }
             }
 
@@ -117,16 +117,16 @@ namespace WebBackOffice.Pages.NPS.Encuesta
             var usuarioToken = (usuarioEncriptado ?? "").Trim().Replace(" ", "+");
 
             if (Encuesta.FlagLogin && string.IsNullOrWhiteSpace(usuarioToken))
-                return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaToken)}");
+                return Redirect(Url.Content($"~/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaToken)}"));
 
             if (Encuesta.FlagBase && string.IsNullOrWhiteSpace(usuarioToken))
-                return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaToken)}");
+                return Redirect(Url.Content($"~/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(encuestaToken)}"));
 
             if ((Encuesta.FlagBase || Encuesta.FlagLogin) && !string.IsNullOrWhiteSpace(usuarioToken))
             {
                 var existe = await ServiceRepositorio.validarClienteEncuesta(usuarioToken, encuestaToken);
                 if (existe.Existe && existe.YaRespondio)
-                    return Redirect("/NPS/Encuesta/Agradecimiento");
+                    return Redirect(Url.Content($"~/NPS/Encuesta/Agradecimiento"));
             }
 
 
@@ -237,7 +237,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                 return Page();
             }
 
-            return Redirect("/NPS/Encuesta/Agradecimiento");
+            return Redirect(Url.Content($"~/NPS/Encuesta/Agradecimiento"));
         }
 
         // ======== Helpers de parseo (sin tocar tus DTOs) ========
