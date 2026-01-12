@@ -8,6 +8,7 @@ using WebBackOffice.Pages.Repositorios;
 namespace WebBackOffice.Pages.Aprendizaje
 {
     [Authorize(Roles = "Admin,Admin Aprendizaje,Gerente Oficina Aprendizaje,Ejecutivo Aprendizaje")]
+    [IgnoreAntiforgeryToken]
     public class DashboardModel : PageModel
     {
         private readonly BackOfficeLabService _service;
@@ -18,8 +19,8 @@ namespace WebBackOffice.Pages.Aprendizaje
         }
 
         // 🔐 Sesión
-        public string Token { get; set; }
-        public string Usuario { get; set; }
+        public string? Token { get; set; }
+        public string? Usuario { get; set; }
 
         // 📊 Data base
         public List<ListadoDashboard_DTO> Data { get; set; } = new();
@@ -51,10 +52,14 @@ namespace WebBackOffice.Pages.Aprendizaje
 
         public async Task<IActionResult> OnGetAsync()
         {
-            Token = HttpContext.Session.GetString("Token");
-            Usuario = HttpContext.Session.GetString("Usuario");
+            var token = HttpContext.Session.GetString("Token");
+            var usuario = HttpContext.Session.GetString("Usuario");
 
-            if (string.IsNullOrEmpty(Token))
+            Token = token;
+            Usuario = usuario;
+
+            if (string.IsNullOrEmpty(token)
+                )
                 return RedirectToPage("/Index");
 
             var request = new RequestDashBoard
@@ -87,6 +92,7 @@ namespace WebBackOffice.Pages.Aprendizaje
 
         private void CargarFiltros()
         {
+            Data ??= new List<ListadoDashboard_DTO>();
             Anios = Data.Select(x => x.ANIO).Distinct().OrderByDescending(x => x).ToList();
             Meses = Data.Select(x => x.MES).Distinct().OrderBy(x => x).ToList();
             EjecutivosFiltro = Data.Select(x => x.EJECUTIVO).Distinct().OrderBy(x => x).ToList();
@@ -149,12 +155,15 @@ namespace WebBackOffice.Pages.Aprendizaje
         }
 
         [BindProperty]
-        public IFormFile ArchivoExcel { get; set; }
+        public IFormFile? ArchivoExcel { get; set; }
 
         public async Task<IActionResult> OnPostCargarExcelAsync()
         {
             var token = HttpContext.Session.GetString("Token");
             var usuario = HttpContext.Session.GetString("Usuario");
+
+            if (string.IsNullOrWhiteSpace(token))
+                return RedirectToPage("/Index");
 
             if (ArchivoExcel == null || ArchivoExcel.Length == 0)
             {
@@ -162,20 +171,10 @@ namespace WebBackOffice.Pages.Aprendizaje
                 return RedirectToPage();
             }
 
-            var respuesta = await _service.CargarExcel(
-                token,
-                ArchivoExcel,
-                usuario
-            );
+            var respuesta = await _service.CargarExcel(token, ArchivoExcel, usuario);
 
-            if (respuesta?.IsSuccess == true)
-            {
-                TempData["MensajeExito"] = "Archivo cargado correctamente.";
-            }
-            else
-            {
-                TempData["MensajeError"] = "Error al cargar el archivo.";
-            }
+            TempData[respuesta?.IsSuccess == true ? "MensajeExito" : "MensajeError"] =
+                respuesta?.IsSuccess == true ? "Archivo cargado correctamente." : "Error al cargar el archivo.";
 
             return RedirectToPage();
         }

@@ -175,45 +175,29 @@
                   enctype="multipart/form-data"
                   asp-page-handler="CargarExcel">
 
+                @Html.AntiForgeryToken()
+
                 <div class="modal-header bg-primary text-white">
                     <h5 class="modal-title">Cargar resultados desde Excel</h5>
-                    <button type="button" class="btn-close"
-                            data-bs-dismiss="modal"></button>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
                 </div>
 
                 <div class="modal-body">
-
                     <div class="mb-3">
-                        <label class="form-label fw-bold">
-                            Seleccione archivo Excel
-                        </label>
+                        <label class="form-label fw-bold">Seleccione archivo Excel</label>
 
                         <input type="file"
-                               name="ArchivoExcel"
+                               asp-for="ArchivoExcel"
                                class="form-control"
                                accept=".xlsx,.xls"
                                required />
                     </div>
-
-                    <div class="alert alert-info small">
-                        El archivo debe estar en formato Excel (.xlsx / .xls)
-                    </div>
-
                 </div>
 
                 <div class="modal-footer">
-                    <button type="button"
-                            class="btn btn-secondary"
-                            data-bs-dismiss="modal">
-                        Cancelar
-                    </button>
-
-                    <button type="submit"
-                            class="btn btn-success">
-                        Subir archivo
-                    </button>
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">Subir archivo</button>
                 </div>
-
             </form>
 
         </div>
