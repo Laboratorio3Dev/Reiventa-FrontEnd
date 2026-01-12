@@ -30,7 +30,17 @@ namespace WebBackOffice.Pages.Repositorios
                 "api/Oficinas/Retencion/CargarExcel",
                 content
             );
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
 
+                Console.WriteLine("❌ ERROR API VentaDigital");
+                Console.WriteLine($"Status: {(int)response.StatusCode} - {response.StatusCode}");
+                Console.WriteLine($"Body: {error}");
+
+               
+            }
+  
             return await response.Content.ReadFromJsonAsync<ResponseTransacciones>();
         }
     }

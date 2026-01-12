@@ -52,6 +52,7 @@ builder.Services.AddScoped<HoudiniServices>();
 builder.Services.AddScoped<BackOfficeLabService>();
 builder.Services.AddScoped<AdminHoudiniServices>();
 builder.Services.AddScoped<RetencionServices>();
+builder.Services.AddScoped<RetencionHipotecariaService>();
 
 ExcelPackage.License.SetNonCommercialOrganization("WebBackOffice");
 
