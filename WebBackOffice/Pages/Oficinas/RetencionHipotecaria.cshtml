@@ -368,7 +368,7 @@
             });
     }
 
-           async function guardarProducto() {
+    async function guardarProducto() {
     if (!ValidarFormulario("modalRetencionHipotecaria")) {
                return;
            }
@@ -385,7 +385,8 @@
             );
 
             if (!data.isSuccess) {
-                MuestraMensaje("ERROR.", data.message, "E");
+                // MuestraMensaje("ERROR.", data.message, "E");
+                alert(data.message);
                 return;
             }
 
