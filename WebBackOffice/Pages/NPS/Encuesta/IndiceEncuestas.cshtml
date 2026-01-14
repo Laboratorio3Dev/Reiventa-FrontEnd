@@ -495,7 +495,7 @@
                             <!-- Preview -->
                             <div class="mt-2">
                                 <img id="loginImagePreview"
-                                     src="@($"/Encuestas/NPS?handler=LoginImageDraft&v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}")"
+                                     src="@Url.Content($"~/Encuestas/NPS?handler=LoginImageDraft&v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}")"
                                      alt="Preview"
                                      style="@(Model.formModel?.ImagenLogin?.Length > 0 || Model.formModel?.IdEncuesta > 0
                                                    ? "display:inline-block; max-height:120px; width:auto; border-radius:8px;"
