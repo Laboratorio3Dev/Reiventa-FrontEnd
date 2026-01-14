@@ -80,7 +80,8 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         public string qrUrlGenerado { get; set; } = string.Empty;
         public bool mostrarQRModal { get; set; } = false;
         public bool mostrarModalVistaPrevia { get; set; } = false;
-
+        private const string SessFormModel = "NPS_formModel";
+        private const string SessImgDraft = "NPS_ImagenLoginDraft";
         public string modalTitle { get; set; } = string.Empty;
         public string modalMessage { get; set; } = string.Empty;
 
@@ -197,23 +198,33 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         // ========== lógica original: ApplyFilters ==========
         private void ApplyFilters()
         {
-            var filtered = string.IsNullOrWhiteSpace(SearchTerm)
-                ? encuestas
-                : encuestas.Where(e => e.NombreEncuesta?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) == true);
+            var filtered = encuestas.AsQueryable();
+
+            if (!string.IsNullOrWhiteSpace(SearchTerm))
+                filtered = filtered.Where(e =>
+                    e.NombreEncuesta != null &&
+                    e.NombreEncuesta.ToLower().Contains(SearchTerm.ToLower()));
 
             if (!string.IsNullOrWhiteSpace(SelectedTipoPersona))
-                filtered = filtered.Where(e => e.TipoPersona == SelectedTipoPersona);
+                filtered = filtered.Where(e =>
+                    e.TipoPersona != null &&
+                    e.TipoPersona.Equals(SelectedTipoPersona, StringComparison.OrdinalIgnoreCase));
 
             if (FechaInicioFiltro.HasValue)
                 filtered = filtered.Where(e => e.FechaInicio >= FechaInicioFiltro.Value);
 
             if (FechaFinFiltro.HasValue)
-                filtered = filtered.Where(e => e.FechaInicio <= FechaFinFiltro.Value);
+                filtered = filtered.Where(e => e.FechaFin <= FechaFinFiltro.Value);
 
             if (!string.IsNullOrWhiteSpace(SelectedEstado))
-                filtered = filtered.Where(e => e.Estado == SelectedEstado);
+                filtered = filtered.Where(e =>
+                    e.Estado != null &&
+                    e.Estado.Equals(SelectedEstado, StringComparison.OrdinalIgnoreCase));
 
-            totalPages = Math.Max(1, (int)Math.Ceiling((double)filtered.Count() / pageSize));
+            filtered = filtered.OrderBy(e => e.FechaInicio);
+
+            var totalItems = filtered.Count();
+            totalPages = Math.Max(1, (int)Math.Ceiling((double)totalItems / pageSize));
             currentPage = Math.Clamp(currentPage, 1, totalPages);
 
             pagedEncuestas = filtered
@@ -299,6 +310,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
         public IActionResult OnPostNuevaEncuesta()
         {
+            ClearNpsSessionState();
             RequireTokenOrRedirect();
             IdEncuestaSeleccionada = 0;
             SetSession("NPS_IdEncuestaSeleccionada", 0);
@@ -310,7 +322,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
             SetSession("NPS_EncuestaConRespuestas", EncuestaConRespuestas);
             SetSession("NPS_modoModal", modoModal);
-            SetSession("NPS_formModel", formModel);
+            PersistDraftFormModel();
             SetSession("NPS_preguntasDisponibles", preguntasDisponibles);
             SetSession("NPS_esEdicion", false);
             SetSession("NPS_mostrarModal", true);
@@ -321,7 +333,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         public async Task<IActionResult> OnPostEditarEncuesta(int IdEncuesta)
         {
             RequireTokenOrRedirect();
-
+            ClearNpsSessionState();
             // Encuesta desde lista (re-buscar para conservar igual)
             var lista = await ServiceRepositorio.ObtenerEncuestas(token!, "");
             var encuesta = lista.First(x => x.IdEncuesta == IdEncuesta);
@@ -348,10 +360,10 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         public async Task<IActionResult> OnPostVerDetalles(int IdEncuesta)
         {
             RequireTokenOrRedirect();
-
+            HttpContext.Session.Remove("NPS_clientesEncuesta");
             var lista = await ServiceRepositorio.ObtenerEncuestas(token!, "");
             var encuesta = lista.First(x => x.IdEncuesta == IdEncuesta);
-
+            ClearNpsSessionState();
             IdEncuestaSeleccionada = encuesta.IdEncuesta;
             modoModal = "ver";
             formModel = CopiarEncuesta(encuesta);
@@ -359,9 +371,11 @@ namespace WebBackOffice.Pages.NPS.Encuesta
             await CargarPreguntas(encuesta);
 
             SetSession("NPS_IdEncuestaSeleccionada", IdEncuestaSeleccionada);
+            SetSession("NPS_EncuestaConRespuestas", EncuestaConRespuestas);
             SetSession("NPS_modoModal", modoModal);
-            SetSession("NPS_formModel", formModel);
+            PersistDraftFormModel();
             SetSession("NPS_preguntasDisponibles", preguntasDisponibles);
+            SetSession("NPS_esEdicion", true);
             SetSession("NPS_mostrarModal", true);
 
             return RedirectToSameListState();
@@ -370,8 +384,9 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         public IActionResult OnPostAbrirVistaPrevia()
         {
             RequireTokenOrRedirect();
-
-            SetSession("NPS_formModel", formModel);
+            MergePostedFormModelWithSession();
+            SetSession(SessFormModel, formModel);
+            PersistDraftFormModel();
 
             esEdicion = GetSession("NPS_esEdicion", false);
             IdEncuestaSeleccionada = esEdicion ? formModel.IdEncuesta : 0;
@@ -386,7 +401,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
             RequireTokenOrRedirect();
 
             // ✅ Guarda lo que ya se escribió en el modal de Encuesta (para que no se borre)
-            SetSession("NPS_formModel", formModel);
+            PersistDraftFormModel();
 
             // reset como en Blazor
             esEdicionPregunta = false;
@@ -425,12 +440,51 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
             return RedirectToSameListState();
         }
+        public async Task<IActionResult> OnPostCargarBase()
+        {
+            RequireTokenOrRedirect();
 
+            SetSession("NPS_mostrarModal", true);
+
+            PersistDraftFormModel();
+
+            if (!formModel.FlagBase)
+            {
+                clientesEncuesta = new List<ClienteEncuestaDto>();
+                SetSession("NPS_clientesEncuesta", clientesEncuesta);
+                return RedirectToSameListState();
+            }
+
+            if (BaseFile == null || BaseFile.Length == 0)
+            {
+                clientesEncuesta = GetSession("NPS_clientesEncuesta", new List<ClienteEncuestaDto>());
+                SetSession("NPS_clientesEncuesta", clientesEncuesta);
+                return RedirectToSameListState();
+            }
+
+            var parsed = await ParseBaseFileAsync(BaseFile);
+            if (parsed.Any())
+            {
+                clientesEncuesta = parsed;
+                SetSession("NPS_clientesEncuesta", clientesEncuesta);
+            }
+            else
+            {
+                clientesEncuesta = new List<ClienteEncuestaDto>();
+                SetSession("NPS_clientesEncuesta", clientesEncuesta);
+            }
+
+            return RedirectToSameListState();
+        }
         public IActionResult OnPostCambioTipoPregunta(string nuevaPreguntaTipo)
         {
-            // solo persistir selección para que el modal muestre el bloque correcto
+            RequireTokenOrRedirect();
+
+            PersistDraftFormModel();
+
             SetSession("NPS_nuevaPreguntaTexto", nuevaPreguntaTexto ?? "");
             SetSession("NPS_nuevaPreguntaTipo", nuevaPreguntaTipo ?? "");
+
             SetSession("NPS_mostrarModalPregunta", true);
             SetSession("NPS_mostrarModal", true);
             return RedirectToSameListState();
@@ -438,6 +492,9 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
         public IActionResult OnPostAgregarAfirmacion()
         {
+            PersistDraftFormModel();
+            SetSession(SessFormModel, formModel);
+            SetSession("NPS_nuevaPreguntaTexto", nuevaPreguntaTexto ?? "");
             afirmaciones = GetSession("NPS_afirmaciones", new List<string>());
             if (!string.IsNullOrWhiteSpace(nuevaAfirmacion))
                 afirmaciones.Add(nuevaAfirmacion);
@@ -450,6 +507,8 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
         public IActionResult OnPostEliminarAfirmacion(string valor)
         {
+            PersistDraftFormModel();
+            SetSession(SessFormModel, formModel);
             afirmaciones = GetSession("NPS_afirmaciones", new List<string>());
             afirmaciones.Remove(valor);
             SetSession("NPS_afirmaciones", afirmaciones);
@@ -460,6 +519,9 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
         public IActionResult OnPostAgregarRespuestaLikert()
         {
+            PersistDraftFormModel();
+            SetSession(SessFormModel, formModel);
+            SetSession("NPS_nuevaPreguntaTexto", nuevaPreguntaTexto ?? "");
             respuestasLikert = GetSession("NPS_respuestasLikert", new List<string>());
             if (!string.IsNullOrWhiteSpace(nuevaRespuestaLikert))
                 respuestasLikert.Add(nuevaRespuestaLikert);
@@ -472,6 +534,8 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
         public IActionResult OnPostEliminarRespuestaLikert(string valor)
         {
+            PersistDraftFormModel();
+            SetSession(SessFormModel, formModel);
             respuestasLikert = GetSession("NPS_respuestasLikert", new List<string>());
             respuestasLikert.Remove(valor);
             SetSession("NPS_respuestasLikert", respuestasLikert);
@@ -483,7 +547,8 @@ namespace WebBackOffice.Pages.NPS.Encuesta
         public IActionResult OnPostEditarPregunta(int TempId)
         {
             RequireTokenOrRedirect();
-            SetSession("NPS_formModel", formModel);
+            PersistDraftFormModel();
+            SetSession(SessFormModel, formModel);
             SetSession("NPS_mostrarModal", true);
             preguntasDisponibles = GetSession("NPS_preguntasDisponibles", new List<PreguntaResponse>());
             var pregunta = preguntasDisponibles.FirstOrDefault(p => p.TempId == TempId);
@@ -526,8 +591,9 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
         public IActionResult OnPostEliminarPregunta(int TempId)
         {
+            PersistDraftFormModel();
+            SetSession(SessFormModel, formModel);
             RequireTokenOrRedirect();
-            SetSession("NPS_formModel", formModel);
             SetSession("NPS_mostrarModal", true);
             preguntasDisponibles = GetSession("NPS_preguntasDisponibles", new List<PreguntaResponse>());
             preguntasEliminadas = GetSession("NPS_preguntasEliminadas", new List<PreguntasEliminar>());
@@ -549,6 +615,8 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
         public IActionResult OnPostGuardarPregunta()
         {
+            PersistDraftFormModel();
+            SetSession(SessFormModel, formModel);
             RequireTokenOrRedirect();
 
             // Rehidratar
@@ -572,7 +640,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
             if (IdPreguntaEditando.HasValue)
             {
-                var pregunta = preguntasDisponibles.FirstOrDefault(p => p.IdPregunta == IdPreguntaEditando.Value);
+                var pregunta = preguntasDisponibles.FirstOrDefault(p => p.TempId == IdPreguntaEditando.Value);
                 if (pregunta != null)
                 {
                     pregunta.Texto = nuevaPreguntaTexto;
@@ -747,6 +815,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                     {
                         modalTitle = "✅ Éxito";
                         modalMessage = "La encuesta fue creada correctamente.";
+                        PersistDraftFormModel();
                     }
                     else
                     {
@@ -808,6 +877,7 @@ namespace WebBackOffice.Pages.NPS.Encuesta
                     {
                         modalTitle = "✅ Éxito";
                         modalMessage = "La encuesta fue creada correctamente.";
+                        PersistDraftFormModel();
                     }
                     else
                     {
@@ -1241,5 +1311,245 @@ namespace WebBackOffice.Pages.NPS.Encuesta
 
             return "application/octet-stream";
         }
+        public async Task<IActionResult> OnPostCargarImagenLogin()
+        {
+            RequireTokenOrRedirect();
+
+            SetSession("NPS_mostrarModal", true);
+
+            MergePostedFormModelWithSession();
+
+            if (!formModel.FlagLogin)
+            {
+                HttpContext.Session.Remove(SessImgDraft);
+                formModel.ImagenLogin = null;
+                SetSession(SessFormModel, formModel);
+                return RedirectToSameListState();
+            }
+
+            if (ImagenLoginFile == null || ImagenLoginFile.Length == 0)
+            {
+                SetSession(SessFormModel, formModel);
+                return RedirectToSameListState();
+            }
+
+            using var ms = new MemoryStream();
+            await ImagenLoginFile.CopyToAsync(ms);
+            var bytes = ms.ToArray();
+
+            SetSession<byte[]?>(SessImgDraft, bytes);
+
+            formModel.ImagenLogin = bytes;
+            SetSession(SessFormModel, formModel);
+
+            return RedirectToSameListState();
+        }
+
+        public IActionResult OnGetLoginImageDraft()
+        {
+            var draft = GetSession<byte[]?>(SessImgDraft, null);
+            if (draft != null && draft.Length > 0)
+                return File(draft, GetImageContentType(draft));
+
+            var model = GetSession(SessFormModel, new EncuestaResponseDTO());
+            var bytes = model.ImagenLogin;
+
+            if (bytes == null || bytes.Length == 0)
+                return NotFound();
+
+            return File(bytes, GetImageContentType(bytes));
+        }
+        private void MergePostedFormModelWithSession()
+        {
+            var sessionModel = GetSession(SessFormModel, new EncuestaResponseDTO());
+            var draftBytes = GetSession<byte[]?>(SessImgDraft, null);
+
+            // Si el post NO trae imagen, conserva: draft > sessionModel
+            if (formModel.ImagenLogin == null || formModel.ImagenLogin.Length == 0)
+            {
+                if (draftBytes != null && draftBytes.Length > 0)
+                    formModel.ImagenLogin = draftBytes;
+                else if (sessionModel.ImagenLogin != null && sessionModel.ImagenLogin.Length > 0)
+                    formModel.ImagenLogin = sessionModel.ImagenLogin;
+            }
+
+            // (Opcional) conserva otros campos si vienen vacíos
+            if (string.IsNullOrWhiteSpace(formModel.NombreEncuesta)) formModel.NombreEncuesta = sessionModel.NombreEncuesta;
+            if (string.IsNullOrWhiteSpace(formModel.TituloEncuesta)) formModel.TituloEncuesta = sessionModel.TituloEncuesta;
+            if (string.IsNullOrWhiteSpace(formModel.TipoPersona)) formModel.TipoPersona = sessionModel.TipoPersona;
+            if (formModel.FechaInicio == null || formModel.FechaInicio == default) formModel.FechaInicio = sessionModel.FechaInicio;
+            if (formModel.FechaFin == null || formModel.FechaFin == default) formModel.FechaFin = sessionModel.FechaFin;
+        }
+        private void ClearNpsSessionState()
+        {
+            // Flags / modales
+            HttpContext.Session.Remove("NPS_mostrarModal");
+            HttpContext.Session.Remove("NPS_modoModal");
+            HttpContext.Session.Remove("NPS_EncuestaConRespuestas");
+            HttpContext.Session.Remove("NPS_esEdicion");
+
+            HttpContext.Session.Remove("NPS_mostrarModalPregunta");
+            HttpContext.Session.Remove("NPS_esEdicionPregunta");
+            HttpContext.Session.Remove("NPS_IdPreguntaEditando");
+
+            HttpContext.Session.Remove("NPS_mostrarModalEstadisticas");
+            HttpContext.Session.Remove("NPS_mostrarQRModal");
+            HttpContext.Session.Remove("NPS_qrUrlGenerado");
+            HttpContext.Session.Remove("NPS_mostrarModalVistaPrevia");
+            HttpContext.Session.Remove("NPS_IdEncuestaSeleccionada");
+
+            // Estado de trabajo
+            HttpContext.Session.Remove("NPS_formModel");
+            HttpContext.Session.Remove("NPS_preguntasDisponibles");
+            HttpContext.Session.Remove("NPS_preguntasEliminadas");
+
+            // Base cargada
+            HttpContext.Session.Remove("NPS_clientesEncuesta");
+
+            // Campos modal pregunta
+            HttpContext.Session.Remove("NPS_nuevaPreguntaTexto");
+            HttpContext.Session.Remove("NPS_nuevaPreguntaTipo");
+            HttpContext.Session.Remove("NPS_rangoMinimo");
+            HttpContext.Session.Remove("NPS_rangoMaximo");
+            HttpContext.Session.Remove("NPS_textoDetractor");
+            HttpContext.Session.Remove("NPS_textoNeutro");
+            HttpContext.Session.Remove("NPS_textoPromotor");
+            HttpContext.Session.Remove("NPS_textoValorMinimo");
+            HttpContext.Session.Remove("NPS_textoValorMaximo");
+            HttpContext.Session.Remove("NPS_afirmaciones");
+            HttpContext.Session.Remove("NPS_respuestasLikert");
+            HttpContext.Session.Remove("NPS_nuevaAfirmacion");
+            HttpContext.Session.Remove("NPS_nuevaRespuestaLikert");
+            HttpContext.Session.Remove("NPS_respuestaPreguntaSimple");
+
+            // Imagen draft (si implementaste ese approach)
+            HttpContext.Session.Remove("NPS_ImagenLoginDraft");
+        }
+        private EncuestaResponseDTO MergeFormModelKeepingBinary()
+        {
+            var sessionModel = GetSession("NPS_formModel", new EncuestaResponseDTO());
+
+            // --- Merge campos "normales" (lo que venga del POST manda si no es vacío)
+            sessionModel.IdEncuesta = (formModel.IdEncuesta > 0) ? formModel.IdEncuesta : sessionModel.IdEncuesta;
+
+            sessionModel.NombreEncuesta = !string.IsNullOrWhiteSpace(formModel.NombreEncuesta)
+                ? formModel.NombreEncuesta
+                : sessionModel.NombreEncuesta;
+
+            sessionModel.TituloEncuesta = !string.IsNullOrWhiteSpace(formModel.TituloEncuesta)
+                ? formModel.TituloEncuesta
+                : sessionModel.TituloEncuesta;
+
+            sessionModel.TipoPersona = !string.IsNullOrWhiteSpace(formModel.TipoPersona)
+                ? formModel.TipoPersona
+                : sessionModel.TipoPersona;
+
+            sessionModel.FechaInicio = (formModel.FechaInicio.HasValue && formModel.FechaInicio.Value != default)
+                ? formModel.FechaInicio
+                : sessionModel.FechaInicio;
+
+            sessionModel.FechaFin = (formModel.FechaFin.HasValue && formModel.FechaFin.Value != default)
+                ? formModel.FechaFin
+                : sessionModel.FechaFin;
+
+            sessionModel.FlagLogin = formModel.FlagLogin;
+            sessionModel.FlagBase = formModel.FlagBase;
+            sessionModel.FlagAnalisis = formModel.FlagAnalisis;
+
+            // --- CLAVE: NO PISAR IMAGEN SI EL POST NO TRAJO ARCHIVO
+            // (en posts intermedios ImagenLoginFile suele venir null)
+            if ((sessionModel.ImagenLogin == null || sessionModel.ImagenLogin.Length == 0) &&
+                (formModel.ImagenLogin != null && formModel.ImagenLogin.Length > 0))
+            {
+                sessionModel.ImagenLogin = formModel.ImagenLogin;
+            }
+
+            // si el POST no trae imagen, conserva la de sesión
+            if (formModel.ImagenLogin == null || formModel.ImagenLogin.Length == 0)
+            {
+                // no hacer nada: nos quedamos con sessionModel.ImagenLogin
+            }
+            else
+            {
+                sessionModel.ImagenLogin = formModel.ImagenLogin;
+            }
+
+            return sessionModel;
+        }
+
+        private void PersistDraftFormModel()
+        {
+            var sessionModel = GetSession("NPS_formModel", new EncuestaResponseDTO());
+
+            // OJO: formModel es el que llegó del POST actual (a veces incompleto)
+            var merged = sessionModel;
+
+            // Textos/fechas: puedes hacer tu merge normal “si viene vacío, toma de sesión”
+            if (!string.IsNullOrWhiteSpace(formModel?.NombreEncuesta)) merged.NombreEncuesta = formModel.NombreEncuesta;
+            if (!string.IsNullOrWhiteSpace(formModel?.TituloEncuesta)) merged.TituloEncuesta = formModel.TituloEncuesta;
+            if (!string.IsNullOrWhiteSpace(formModel?.TipoPersona)) merged.TipoPersona = formModel.TipoPersona;
+            if (formModel?.FechaInicio != null && formModel.FechaInicio != default) merged.FechaInicio = formModel.FechaInicio;
+            if (formModel?.FechaFin != null && formModel.FechaFin != default) merged.FechaFin = formModel.FechaFin;
+
+            // ✅ BOOLEANOS: solo actualiza si vinieron en el form POST
+            if (Request.Form.ContainsKey("formModel.FlagLogin"))
+                merged.FlagLogin = formModel.FlagLogin;
+
+            if (Request.Form.ContainsKey("formModel.FlagBase"))
+                merged.FlagBase = formModel.FlagBase;
+
+            if (Request.Form.ContainsKey("formModel.FlagAnalisis"))
+                merged.FlagAnalisis = formModel.FlagAnalisis;
+
+            // ✅ IMAGEN: si no vino archivo nuevo, NO la borres
+            if (merged.ImagenLogin == null || merged.ImagenLogin.Length == 0)
+                merged.ImagenLogin = sessionModel.ImagenLogin;
+
+            SetSession("NPS_formModel", merged);
+            formModel = merged;
+        }
+        public async Task<IActionResult> OnPostEliminarEncuesta(int IdEncuesta)
+        {
+            try
+            {
+                RequireTokenOrRedirect();
+
+                // (opcional) cerrar modales por si estaban abiertos
+                SetSession("NPS_mostrarModal", false);
+                SetSession("NPS_mostrarModalPregunta", false);
+                SetSession("NPS_mostrarModalVistaPrevia", false);
+
+                // LLAMADA AL API DELETE
+                var ok = await ServiceRepositorio.EliminarEncuesta(token!, IdEncuesta);
+
+                if (!ok)
+                {
+                    modalTitle = "❌ Error";
+                    modalMessage = "No se pudo eliminar la encuesta.";
+                }
+                else
+                {
+                    modalTitle = "✅ Éxito";
+                    modalMessage = "Encuesta eliminada correctamente.";
+
+                    // Limpia sesiones relacionadas por seguridad
+                    HttpContext.Session.Remove("NPS_formModel");
+                    HttpContext.Session.Remove("NPS_preguntasDisponibles");
+                    HttpContext.Session.Remove("NPS_preguntasEliminadas");
+                    HttpContext.Session.Remove("NPS_clientesEncuesta");
+                }
+
+                return RedirectToSameListState();
+            }
+            catch (Exception ex)
+            {
+                if (ex is InvalidOperationException && ex.Message == "NO_TOKEN")
+                    return Redirect("/");
+
+                throw;
+            }
+        }
+
+
     }
 }
