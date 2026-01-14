@@ -14,7 +14,6 @@ namespace WebBackOffice.Pages.Repositorios
             _http = http.CreateClient("ApiClient");
         }
 
-        // ✅ Centraliza Bearer (evita olvidos y detecta token vacío)
         private void EnsureBearer(string token)
         {
             if (string.IsNullOrWhiteSpace(token))
@@ -80,6 +79,17 @@ namespace WebBackOffice.Pages.Repositorios
 
             return resultado;
         }
+        public async Task<bool> EliminarEncuesta(string token, int idEncuesta)
+        {
+            EnsureBearer(token);
+
+
+            // Ajusta BASE URL según tu config
+            var url = $"api/NPS/Encuesta/EliminarEncuesta/{idEncuesta}";
+
+            var resp = await _http.DeleteAsync(url);
+            return resp.IsSuccessStatusCode;
+        }
 
         public async Task<List<BaseClientesEncuestaDTO>> ObtenerBaseCLientesEncuestas(string token, int idEncuesta)
         {
@@ -99,7 +109,6 @@ namespace WebBackOffice.Pages.Repositorios
                 $"api/NPS/Encuesta/ExportarRespuestas?idEncuesta={idEncuesta}");
         }
 
-        // ✅ IMPORTANTE: estos métodos ahora reciben token y seteamos Bearer antes del POST
 
         public async Task<ResponseTransacciones?> CrearEncuesta(string token, CrearEncuestaDTO request)
         {

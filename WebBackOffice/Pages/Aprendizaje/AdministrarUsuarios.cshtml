@@ -1,0 +1,162 @@
+﻿@page
+@model WebBackOffice.Pages.Aprendizaje.AdministrarUsuariosModel
+@{
+    ViewData["Title"] = "Administración de Usuarios";
+}
+
+<h2>👥 Administración de Usuarios</h2>
+
+<button class="btn btn-primary mb-3"
+        data-bs-toggle="modal"
+        data-bs-target="#modalUsuario">
+    ➕ Nuevo Usuario
+</button>
+
+<table class="table table-bordered table-striped">
+    <thead class="table-dark">
+        <tr>
+            <th>Nombre Completo</th>
+            <th>Usuario Windows</th>
+            <th>Oficina</th>
+            <th>Rol</th>
+            <th>Zona</th>
+            <th>Estado</th>
+            <th>Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var u in Model.Usuarios)
+        {
+            <tr>
+                <td>@u.NombreCompleto</td>
+                <td>@u.UsuarioWindows</td>
+                <td>@u.Oficina</td>
+                <td>@u.Rol</td>
+                <td>@u.Zona</td>
+                <td>
+                    <span class="badge @(u.Estado == 1 ? "bg-success" : "bg-secondary")">
+                        @u.Estado
+                    </span>
+                </td>
+                <td>
+                    <button class="btn btn-sm btn-warning"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalUsuario"
+                            onclick="editar(@Html.Raw(Json.Serialize(u)))">
+                        ✏️
+                    </button>
+
+                    <button class="btn btn-sm btn-danger"
+                            data-bs-toggle="modal"
+                            data-bs-target="#modalReset"
+                            onclick="setReset(@u.IdUsuario)">
+                        🔐
+                    </button>
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+<div class="modal fade" id="modalUsuario">
+    <div class="modal-dialog modal-lg">
+        <form method="post" asp-page-handler="Crear">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Usuario</h5>
+                </div>
+
+                <div class="modal-body row g-3">
+                    <input type="hidden" asp-for="Usuario.IdUsuario" />
+
+                    <div class="col-md-6">
+                        <label>Nombre Completo</label>
+                        <input asp-for="Usuario.NombreCompleto" class="form-control" />
+                    </div>
+
+                    <div class="col-md-6">
+                        <label>Usuario Windows</label>
+                        <input asp-for="Usuario.UsuarioWindows" class="form-control" />
+                    </div>
+
+                    <div class="col-md-4">
+                        <label>Oficina</label>
+                        <select asp-for="Usuario.Oficina"
+                                class="form-control"
+                                asp-items="@(new SelectList(Model.Oficinas))">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+
+                @*     <div class="col-md-4">
+                        <label>Zona</label>
+                        <input asp-for="Usuario.Zona" class="form-control" />
+                    </div>
+ *@
+                    <div class="col-md-4">
+                        <label>Rol</label>
+                        <select asp-for="Usuario.Rol"
+                                class="form-control"
+                                asp-items="@(new SelectList(Model.Roles))">
+                            <option value="">-- Seleccione --</option>
+                        </select>
+                    </div>
+
+                  @*   <div class="col-md-6">
+                        <label>Documento Identidad</label>
+                        <input asp-for="Usuario.DocumentoIdentidad"
+                               class="form-control" />
+                    </div> *@
+
+                    <div class="col-md-6">
+                        <label>Estado</label>
+                        <select asp-for="Usuario.Estado" class="form-control">
+                            <option value="1">Activo</option>
+                            <option value="0">Inactivo</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="submit" class="btn btn-success">💾 Guardar</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<div class="modal fade" id="modalReset">
+    <div class="modal-dialog">
+        <form method="post" asp-page-handler="ResetPassword">
+            <input type="hidden" id="idUsuarioReset" name="idUsuario" />
+
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5>🔐 Restablecer Contraseña</h5>
+                </div>
+
+                <div class="modal-body">
+                    <label>Ingrese DNI</label>
+                    <input asp-for="DniReset" class="form-control" required />
+                </div>
+
+                <div class="modal-footer">
+                    <button class="btn btn-danger">Restablecer</button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+<script>
+    function editar(usuario) {
+        document.querySelector('[name="Usuario.IdUsuario"]').value = usuario.idUsuario;
+        document.querySelector('[name="Usuario.NombreCompleto"]').value = usuario.nombreCompleto;
+        document.querySelector('[name="Usuario.UsuarioWindows"]').value = usuario.usuarioWindows;
+        document.querySelector('[name="Usuario.Oficina"]').value = usuario.oficina;
+        document.querySelector('[name="Usuario.Zona"]').value = usuario.zona;
+        document.querySelector('[name="Usuario.Rol"]').value = usuario.rol;
+        document.querySelector('[name="Usuario.Estado"]').value = usuario.estado;
+    }
+
+    function setReset(id) {
+        document.getElementById("idUsuarioReset").value = id;
+    }
+</script>

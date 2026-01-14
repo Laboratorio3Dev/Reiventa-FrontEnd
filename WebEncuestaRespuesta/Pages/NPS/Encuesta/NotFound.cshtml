@@ -1,0 +1,29 @@
+﻿@page "/NPS/Encuesta/noExiste"
+@model WebEncuestaRespuesta.Pages.NPS.Encuesta.NotFoundModel
+
+
+@{
+    ViewData["Title"] = "Encuestas";
+}
+
+<div class="banbif-confirmacion">
+    <div class="container">
+        <div class="row text-center">
+            <div class="col-12">
+                <img src="~/Images/Preview/icon-experiencia.png" alt="BanBif" height="145" width="145" />
+            </div>
+            <div class="col-12">
+                <h2 class="texted-one">La encuesta solicitada no está disponible en este momento</h2>
+            </div>
+            <div class="col-12">
+                <h4 class="texted-two">Muchas gracias por su atención!</h4>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        if (window.loadSurveyStyles) window.loadSurveyStyles();
+    </script>
+}

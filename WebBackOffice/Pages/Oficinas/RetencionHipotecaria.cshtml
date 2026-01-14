@@ -1,0 +1,161 @@
+﻿@page
+@model WebBackOffice.Pages.Oficinas.RetencionHipotecariaModel
+
+@{
+    ViewData["Title"] = "Retención Hipotecaria";
+}
+
+<div class="container-fluid px-4 py-3">
+
+    <h4 class="mb-3">
+        <i class="bi bi-table"></i> Bandeja Retención Hipotecaria
+    </h4>
+
+    <!-- ================= FILTROS ================= -->
+    <div class="card shadow-sm mb-3">
+        <div class="card-body">
+            <div class="row g-3 align-items-end">
+
+                <div class="col-md-3">
+                    <label>Fecha inicio</label>
+                    <input type="date" id="fechaInicio" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <label>Fecha fin</label>
+                    <input type="date" id="fechaFin" class="form-control" />
+                </div>
+
+                <div class="col-md-3">
+                    <button class="btn btn-primary w-100" onclick="buscar(1)">
+                        <i class="bi bi-search"></i> Buscar
+                    </button>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= TABLA ================= -->
+    <div class="table-responsive shadow-sm">
+        <table class="table table-striped table-bordered align-middle">
+            <thead class="table-primary text-center">
+                <tr>
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>DNI</th>
+                    <th>Moneda</th>
+                    <th>Tasa Sol.</th>
+                    <th>Tasa Of.</th>
+                    <th>Entidad</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
+                </tr>
+            </thead>
+            <tbody id="tbodySolicitudes">
+                <tr>
+                    <td colspan="9" class="text-center text-muted">
+                        Realice una búsqueda
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <!-- ================= PAGINADO ================= -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <button class="btn btn-outline-secondary"
+                id="btnPrev"
+                onclick="cambiarPagina(-1)"
+                disabled>
+            Anterior
+        </button>
+
+        <span id="lblPagina" class="fw-semibold">
+            Página 1
+        </span>
+
+        <button class="btn btn-outline-secondary"
+                id="btnNext"
+                onclick="cambiarPagina(1)"
+                disabled>
+            Siguiente
+        </button>
+    </div>
+
+</div>
+
+@section Scripts {
+<script>
+    let paginaActual = 1;
+    const pageSize = 10;
+
+    function buscar(pagina) {
+        paginaActual = pagina;
+
+        const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
+
+        showLoading();
+
+        fetch(`?handler=Listar&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&page=${paginaActual}`)
+            .then(r => r.json())
+            .then(data => {
+                renderTabla(data);
+                actualizarPaginado(data.length);
+            })
+            .catch(() => {
+                alert('Error cargando datos');
+            })
+            .finally(() => hideLoading());
+    }
+
+    function renderTabla(data) {
+        const tbody = document.getElementById('tbodySolicitudes');
+        tbody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted">
+                        No se encontraron registros
+                    </td>
+                </tr>`;
+            return;
+        }
+
+        data.forEach(r => {
+            tbody.innerHTML += `
+                <tr class="text-center">
+                    <td>${r.id}</td>
+                    <td>${r.producto}</td>
+                    <td>${r.dni_Cliente}</td>
+                    <td>${r.moneda}</td>
+                    <td>${r.tasa_Solicitada}</td>
+                    <td>${r.tasa_Ofrecida ?? '-'}</td>
+                    <td>${r.entidad}</td>
+                    <td>${r.estado}</td>
+                    <td>${formatearFecha(r.fecha_Registro)}</td>
+                </tr>`;
+        });
+    }
+
+    function actualizarPaginado(total) {
+        document.getElementById('lblPagina').innerText =
+            `Página ${paginaActual}`;
+
+        document.getElementById('btnPrev').disabled = paginaActual <= 1;
+        document.getElementById('btnNext').disabled = total < pageSize;
+    }
+
+    function cambiarPagina(delta) {
+        buscar(paginaActual + delta);
+    }
+
+    function formatearFecha(fecha) {
+        if (!fecha) return '';
+        return new Date(fecha).toLocaleDateString();
+    }
+</script>
+}
+

@@ -14,7 +14,7 @@ namespace WebEncuestaRespuesta.Pages.NPS.Encuesta
             _service = service;
         }
 
-        // ?encuesta=...&u=...
+        
         [BindProperty(SupportsGet = true, Name = "encuesta")]
         public string? EncuestaEncriptada { get; set; }
 
@@ -24,9 +24,8 @@ namespace WebEncuestaRespuesta.Pages.NPS.Encuesta
         public async Task<IActionResult> OnGetAsync()
         {
             if (string.IsNullOrWhiteSpace(EncuestaEncriptada))
-                return RedirectToPage("/Error"); // o una página tuya: /NPS/Encuesta/ErrorLink
+                return Redirect(Url.Content($"~/NPS/Encuesta/noExiste")); 
 
-            // en blazor hacías: Trim + Replace(" ", "+")
             var enc = EncuestaEncriptada.Trim().Replace(" ", "+");
 
             EncuestaResponseDTO? encuesta;
@@ -36,35 +35,30 @@ namespace WebEncuestaRespuesta.Pages.NPS.Encuesta
             }
             catch
             {
-                // si quieres, manda a una pantalla de "link inválido"
-                return RedirectToPage("/Error");
+                return Redirect(Url.Content($"~/NPS/Encuesta/noExiste"));
             }
 
             if (encuesta == null)
-                return RedirectToPage("/Error");
+                return Redirect(Url.Content($"~/NPS/Encuesta/noExiste"));
 
-            // === Tu misma lógica ===
-            // 1) No login y no base => responder directo
             if (encuesta.FlagLogin == false && encuesta.FlagBase == false)
             {
-                return Redirect($"/NPS/Encuesta/Responder?encuesta={Uri.EscapeDataString(enc)}");
+                return Redirect(Url.Content($"~/NPS/Encuesta/Responder?encuesta={Uri.EscapeDataString(enc)}"));
             }
-
-            // 2) Si viene usuario => responder con usuario
+            else if ((encuesta.FlagLogin || encuesta.FlagBase) && string.IsNullOrWhiteSpace(UsuarioEncriptado))
+            {
+                return Redirect(Url.Content($"~/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}"));
+            }
             if (!string.IsNullOrWhiteSpace(UsuarioEncriptado))
             {
-                return Redirect($"/NPS/Encuesta/Responder?encuesta={Uri.EscapeDataString(enc)}&u={Uri.EscapeDataString(UsuarioEncriptado)}");
+                return Redirect(Url.Content($"~/NPS/Encuesta/responder?encuesta={Uri.EscapeDataString(enc)}&u={Uri.EscapeDataString(UsuarioEncriptado)}"));
             }
-
-            // 3) Si requiere login => ir a Inicio
             if (encuesta.FlagLogin)
             {
-                return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
+                return Redirect(Url.Content($"~/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}"));
             }
 
-            // 4) Caso típico: FlagBase true pero no llegó u
-            // aquí normalmente deberías mandar a una pantalla para pedir/validar documento o seleccionar usuario.
-            return Redirect($"/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}");
+            return Redirect(Url.Content($"~/NPS/Encuesta/Inicio?encuesta={Uri.EscapeDataString(enc)}"));
         }
     }
 }

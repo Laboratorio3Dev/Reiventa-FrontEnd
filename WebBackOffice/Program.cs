@@ -51,11 +51,17 @@ builder.Services.AddScoped<UserSessionService>();
 builder.Services.AddScoped<HoudiniServices>();
 builder.Services.AddScoped<BackOfficeLabService>();
 builder.Services.AddScoped<AdminHoudiniServices>();
+builder.Services.AddScoped<RetencionServices>();
+builder.Services.AddScoped<RetencionHipotecariaService>();
 
 ExcelPackage.License.SetNonCommercialOrganization("WebBackOffice");
 
 
-builder.Services.AddSession();
+builder.Services.AddSession(options => {
+    options.IdleTimeout = TimeSpan.FromHours(1);
+    options.Cookie.HttpOnly = true;
+    options.Cookie.IsEssential = true;
+});
 
 var app = builder.Build();
 
@@ -68,11 +74,11 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-
+app.UseSession();
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
-app.UseSession();
+
 app.MapRazorPages();
 
 app.Run();

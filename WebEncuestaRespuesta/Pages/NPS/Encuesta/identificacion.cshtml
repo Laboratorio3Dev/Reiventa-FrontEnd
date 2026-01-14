@@ -5,8 +5,12 @@
     Layout = "_IdentificacionLayout";
 }
     <section class="banbif-hero banbif-bg-white">
-        <div class="banbif-bg-image-form" aria-hidden="true"></div>
-
+    <<div class="banbif-bg-image-form"
+          aria-hidden="true"
+          style="@(string.IsNullOrWhiteSpace(Model.LoginBgUrl)
+                       ? ""
+                       : $"background-image:url('{Model.LoginBgUrl}'), url('/Images/Preview/image-form-x2.png') !important;")">
+    </div>
         <div class="container banbif-banner">
             <div class="row g-0 align-items-stretch">
                 <div id="header-text" class="col-md-7 d-flex">
@@ -107,13 +111,5 @@
         </div>
     </section>
 
-<script src="js/encuestaInicio.js"></script>
 <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 
-@section Scripts {
-    <script>
-        if (window.loadSurveyStyles) window.loadSurveyStyles();
-        if (window.encuestaInicio && window.encuestaInicio.init) window.encuestaInicio.init();
-    </script>
-
-}

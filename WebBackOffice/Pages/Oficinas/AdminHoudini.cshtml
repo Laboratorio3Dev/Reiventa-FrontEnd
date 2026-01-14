@@ -6,7 +6,7 @@
     ViewData["Title"] = "Admin Houdini";
 }
 
-<div class="container-fluid px-4 py-3">
+<div class="filters">
 
     <!-- HEADER -->
     <div class="d-flex flex-column flex-md-row justify-content-between align-items-md-center gap-2 mb-4">
@@ -51,7 +51,7 @@
         <i class="bi bi-plus-circle"></i> Nuevo Producto
     </button>
     <br />
-
+    <br />
     <!-- LISTADO -->
     @if (Model.PagedProductos == null)
     {
@@ -68,50 +68,12 @@
     }
     else
     {
-        <div class="table-view">
-            <div class="table-responsive-custom">
-                <table class="custom-table">
-                    <thead >
-                        <tr class="text-center">
-                            <th>Título</th>
-                            <th>Sub Título</th>
-                            <th>Asunto</th>
-                            <th>Acciones</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @foreach (var e in Model.PagedProductos)
-                        {
-                            <tr class="text-center">
-                                <td>@e.Titulo</td>
-                                <td>@e.SubTitulo</td>
-                                <td>@e.Asunto</td>
-                                <td>
-                                    <a class="btn btn-sm btn-outline-primary">
-                                        Editar
-                                    </a>
-                                </td>
-                            </tr>
-                        }
-                    </tbody>
-                </table>
-            </div>
-       </div>
-
-        <!-- PAGINACIÓN -->
-        <div class="d-flex justify-content-between align-items-center mt-3">
-            <a class="btn btn-outline-secondary @(Model.CanGoPrevious ? "" : "disabled")"
-               asp-route-pageNumber="@(Model.CurrentPage - 1)">
-                Anterior
-            </a>
-
-            <span>Página @Model.CurrentPage de @Model.TotalPages</span>
-
-            <a class="btn btn-outline-secondary @(Model.CanGoNext ? "" : "disabled")"
-               asp-route-pageNumber="@(Model.CurrentPage + 1)">
-                Siguiente
-            </a>
+        <div id="contenedorTabla">
+            @await Html.PartialAsync("_TablaProductos", Model)
         </div>
+
+    
+
     }
 </div>
 
@@ -133,38 +95,55 @@
                 <form id="frmProducto" method="post">
                     @Html.AntiForgeryToken()
 
-                    <input type="hidden" id="productoId" name="IdProducto" />
+                    <input type="hidden" id="ProductoId" name="IdProducto" />
 
                     <div class="row g-3">
                         <div class="col-md-6">
-                            <label for="titulo">Título</label>
-                            <input id="titulo" class="form-control required"  />
+                            <label for="Titulo">Título</label>
+                            <input id="Titulo" name="Titulo" class="form-control required" />
                         </div>
 
                         <div class="col-md-6">
-                            <label>Sub Título</label>
-                            <input id="subTitulo" name="SubTitulo" class="form-control required" required />
+                            <label for="SubTitulo">Sub Título</label>
+                            <input id="SubTitulo" name="SubTitulo" class="form-control" />
                         </div>
 
                         <div class="col-md-6">
-                            <label>Asunto</label>
-                            <input id="asunto" name="Asunto" class="form-control required" required />
+                            <label for="Asunto">Asunto</label>
+                            <input id="Asunto" name="Asunto" class="form-control" placeholder="Ej: Hola {Nombre}, tu producto está listo" />
+                            <small class="text-muted d-block mt-1">
+                                <i class="bi bi-info-circle"></i>
+                                Usa <strong>{Nombre}</strong> para mostrar el nombre del cliente.
+                                Este valor será reemplazado automáticamente al enviar el correo.
+                            </small>
                         </div>
 
                         <div class="col-md-6">
-                            <label>Orden</label>
-                            <select id="orden" name="Orden" class="form-select required" required>
-                                <option value="">Seleccione</option>
-                                <option value="1">1</option>
-                                <option value="2">2</option>
-                                <option value="3">3</option>
-                            </select>
+                            <label for="Orden">Orden</label>
+                            <input type="number"
+                                   id="Orden"
+                                   name="Orden"
+                                   class="form-control required"
+                                   min="1"
+                                   step="1"
+                                   placeholder="Ej: 1" />
+                            <small class="text-muted">
+                                El sistema ajustará automáticamente los demás productos
+                            </small>
+                        </div>
+                        <div class="col-12">
+                            <label for="FormatoCorreo" >Formato del correo (HTML)</label>
+                            <textarea id="FormatoCorreo"
+                                      class="form-control required"
+                                      rows="6"
+                                      name="FormatoCorreo">
+                            </textarea>
                         </div>
                     </div>
                 </form>
 
                 <!-- MENSAJE -->
-                <div id="mensajeModal" class="mt-3"></div>
+                @* <div id="mensajeModal" class="mt-3"></div> *@
             </div>
 
             <div class="modal-footer">
@@ -194,11 +173,12 @@
     function nuevoProducto() {
         document.getElementById('modalTitulo').innerText = 'Nuevo Producto';
 
-        document.getElementById('productoId').value = '';
-        document.getElementById('titulo').value = '';
-        document.getElementById('subTitulo').value = '';
-        document.getElementById('asunto').value = '';
-        document.getElementById('orden').value = '';
+        document.getElementById('ProductoId').value = '';
+        document.getElementById('Titulo').value = '';
+        document.getElementById('SubTitulo').value = '';
+        document.getElementById('Asunto').value = '';
+        document.getElementById('Orden').value = '';
+        document.getElementById('FormatoCorreo').value = '';
 
 
 
@@ -206,48 +186,64 @@
         modalProducto.show();
     }
 
-    function editarProducto(id, titulo, subTitulo, asunto, orden) {
-        document.getElementById('modalTitulo').innerText = 'Editar Producto';
+       function editarProducto(id) {
+        fetch(`?handler=ObtenerProducto&id=${id}`)
+            .then(r => r.json())
+            .then(p => {
+                debugger;
+                document.getElementById('modalTitulo').innerText = 'Editar Producto';
 
-        document.getElementById('productoId').value = id;
-        document.getElementById('titulo').value = titulo;
-        document.getElementById('subTitulo').value = subTitulo;
-        document.getElementById('asunto').value = asunto;
-        document.getElementById('orden').value = orden;
+                document.getElementById('ProductoId').value = p.data.idProducto;
+                document.getElementById('Titulo').value = p.data.titulo;
+                document.getElementById('SubTitulo').value = p.data.subTitulo;
+                document.getElementById('Asunto').value = p.data.asunto;
+                document.getElementById('Orden').value = p.data.orden;
+                document.getElementById('FormatoCorreo').value = p.data.formatoCorreo;
 
-        modalProducto.show();
+                modalProducto.show();
+            })
+            .catch(() => {
+                mostrarMensaje('Error cargando el producto', 'danger');
+            });
     }
 
 
-      function guardarProducto() {
-          debugger;
-       // if (!validarFormularioProducto()) return;
+          async function guardarProducto() {
+
         if (!ValidarFormulario("modalProducto")) {
-                  return;
-         }
-
-        const form = document.getElementById('frmProducto');
-        const formData = new FormData(form);
-
-        fetch('?handler=GuardarProducto', {
-            method: 'POST',
-            body: formData
-        })
-        .then(r => r.json())
-        .then(data => {
-           // 🔥 MENSAJE DEL BACK
-        mostrarMensaje(data.message, data.isSuccess ? 'success' : 'danger');
-
-        if (data.isSuccess) {
-            setTimeout(() => {
-                window.location.reload();
-            }, 1200);
+            return;
         }
-        })
-        .catch(err => {
+
+       // showLoading();
+
+        try {
+            const form = document.getElementById('frmProducto');
+            const formData = new FormData(form);
+
+             const data = await fetchConLoading(
+                    '?handler=GuardarProducto',
+                    {
+                        method: 'POST',
+                        body: formData
+                    }                    
+                );
+
+            if (!data.isSuccess) {
+              //  mostrarMensaje(data.message, 'danger');
+                MuestraMensaje("ERROR.", data.message, "E")
+                return;
+            }
+            MuestraMensaje("CORRECTO.", data.message, "OK")
+            modalProducto.hide();
+
+      
+            await cambiarPagina(1);
+
+        } catch (err) {
             console.error(err);
-            mostrarMensaje('Error inesperado');
-        });
+            
+             MuestraMensaje("ERROR.","Error inesperado", "E")
+        } 
     }
 
 
@@ -256,163 +252,134 @@
              `<div class="alert alert-${tipo}">${texto}</div>`;
      }
 
-       function validarFormularioProducto() {
+     
+    // function desactivarProducto(id) {
+    //     if (!confirm('¿Desactivar este producto?')) return;
 
-        const campos = [
-            { id: 'titulo', nombre: 'Título' },
-            { id: 'subTitulo', nombre: 'Sub Título' },
-            { id: 'asunto', nombre: 'Asunto' },
-            { id: 'orden', nombre: 'Orden' }
-        ];
+    //     fetch(`/api/Oficinas/AdminHoudini/Desactivar/${id}`, {
+    //         method: 'PATCH'
+    //     })
+    //     .then(r => r.json())
+    //     .then(data => {
+    //         alert(data.message);
+    //         if (data.isSuccess) {
+    //             cambiarPagina(1);
+    //         }
+    //     });
+    // }
 
-        let valido = true;
-        let mensajes = [];
+     function cambiarEstado(id, activar) {
+        const texto = activar ? 'activar' : 'desactivar';
 
-        campos.forEach(c => {
-            const el = document.getElementById(c.id);
+        if (!confirm(`¿Deseas ${texto} este producto?`)) return;
 
-            if (!el.value || el.value.trim() === '') {
-                el.classList.add('is-invalid');
-                mensajes.push(`El campo ${c.nombre} es obligatorio`);
-                valido = false;
+        showLoading();
+
+        fetch(`?handler=CambiarEstadoProducto`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'RequestVerificationToken':
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            },
+            body: JSON.stringify({
+                idProducto: id,
+                activar: activar
+            })
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (!data.isSuccess) {
+                mostrarMensaje(data.message, 'danger');
+                return;
             }
-        });
 
-        if (!valido) {
-            mostrarMensaje(mensajes[0], 'danger'); // ✔ solo uno
-        }
+            // 🔁 Cambiar botón dinámicamente
+            const btn = document.getElementById(`btn-estado-${id}`);
 
-        return valido;
-    }
-
-        function ValidarFormulario(form) {
-
-        var MsjObligatorio = "<small class='form-text text-muted field-validation-error'>Campo {0} obligatorio</small>";
-        var validacion = true;
-        $(".form-text").remove();
-        $("#" + form + " .form-control").removeClass("hasError");
-        $("#" + form + " .custom-file").removeClass("hasError");
-        $("#" + form + " div").removeClass("hasError");
-        $("#" + form + " .select2-selection").removeClass("hasError");
-        $("#" + form + " .custom-file-label").removeClass("hasError");
-        $("#" + form + " .cam-peoplepicker-userlookup").removeClass("hasError");
-        $("#" + form + " input").removeClass("hasErrorCheckBox");
-        $("#" + form + " div").removeClass("is-invalid");
-        $("#" + form + " .required").each(function () {
-            if ($(this).is(":visible")) {
-                if (this.type == "checkbox") {
-                    if (!$(this).prop('checked')) {
-                        $(this).addClass("hasErrorCheckBox");
-                        validacion = false;
-                    }
-                } else if (this.localName == "input" || this.localName == "select" || this.localName == "textarea") {
-                    if ($(this).val() == "" || $(this).val() == "0" || $(this).val() == "-1" || $(this).val() == "[]" || $(this).val() == null) {
-                        if ($(this).hasClass("reference")) {
-                            var reference = this.className.split("ref_")[1];
-                            var objreference = $("#" + reference);
-                            if (objreference[0].type == "checkbox") {
-                                if ($(this).hasClass("controlSiNo")) {
-                                    if (objreference.prop('checked')) {
-                                        $(this.parentElement).addClass("hasError");
-                                        validacion = false;
-                                    }
-                                } else {
-                                    if (!objreference.prop('checked')) {
-                                        $(this).addClass("hasError");
-                                        validacion = false;
-                                    }
-                                }
-                            } else {
-                                objreference.addClass("hasError");
-                                validacion = false;
-                            }
-                        } else {
-                            if ($(this).hasClass("selectpicker")) {
-                                $(this).parent().addClass("is-invalid");
-                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
-                                $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
-                                validacion = false;
-                            } else if ($(this).hasClass("custom-file-input")) {
-                                $(this).parent().find(".custom-file-label").addClass("hasError");
-                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
-                                $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
-                                validacion = false;
-                            } else if ($(this).parent().hasClass("date")) {
-                                $(this).addClass("hasError");
-                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
-                                $(this).parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
-                                validacion = false;
-                            } else if ($(this).hasClass("selectMultiple")) {
-                                var id = $(this).attr("id");
-                                if ($("#" + id + ">option").length <= 0) {
-                                    $(this).addClass("hasError");
-                                    var Label = $("label[for='" + $(this).attr("id") + "']").text();
-                                    $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
-                                    validacion = false;
-                                }
-                            } else {
-                                $(this).addClass("hasError");
-                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
-                                $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
-                                validacion = false;
-                            }
-                        }
-                    } else {
-                        if ($(this).attr("minlength") != undefined && $(this).attr("minlength") != null) {
-                            if ($(this).val().length < $(this).attr("minlength")) {
-                                $(this).addClass("hasError");
-                                validacion = false;
-                            }
-                        }
-                    }
-                } else if (this.localName == "p") {
-                    if ($(this).html() == "") {
-                        $(this).addClass("hasError");
-                        validacion = false;
-                    }
-                } else if (this.localName == "table") {
-                    var tableid = $(this).attr("id");
-                    if ($("#" + tableid + " tbody").html().indexOf("No se encontraron resultados") != -1) {
-                        $(this).parent().parent().addClass("hasError");
-                        validacion = false;
-                    }
-                }
+            if (activar) {
+                btn.className = 'btn btn-outline-danger btn-sm';
+                btn.innerText = 'Desactivar';
+                btn.onclick = () => cambiarEstado(id, false);
             } else {
-                if (this.type == "hidden") {
-                    if ($(this).val() == "" || $(this).val() == "0" || $(this).val() == "-1" || $(this).val() == "[]") {
-                        if ($(this).hasClass("reference")) {
-                            var reference = this.className.split("ref_")[1];
-                            var objreference = $("#" + reference);
-                            if (objreference[0].type == "checkbox") {
-                                if ($(this).hasClass("controlSiNo")) {
-                                    if (objreference.prop('checked')) {
-                                        $(this.parentElement).addClass("hasError");
-                                        validacion = false;
-                                    }
-                                } else {
-                                    if (!objreference.prop('checked')) {
-                                        $(this).addClass("hasError");
-                                        validacion = false;
-                                    }
-                                }
-                            } else {
-                                objreference.parent().addClass("hasError");
-                                var Label = $("label[for='" + $(this).attr("id") + "']").text();
-                                objreference.parent().parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
-                                validacion = false;
-                            }
-                        } else if ($(this).hasClass("cam-peoplepicker-inputvalue")) {
-                            $(this).parent().find(".cam-peoplepicker-userlookup").addClass("hasError");
-                            var Label = "";
-                            $(this).parent().append(MsjObligatorio.replace("{0}", Label.replace(":", "")));
-                            validacion = false;
-                        }
-                    }
-                }
+                btn.className = 'btn btn-outline-success btn-sm';
+                btn.innerText = 'Activar';
+                btn.onclick = () => cambiarEstado(id, true);
             }
+           MuestraMensaje("CORRECTO.", data.message, "OK")
+         
+        })
+        .catch(() => {
+           MuestraMensaje("ERROR.","Error inesperado", "E")
+        })
+        .finally(() => {
+            hideLoading();
         });
-
-        return validacion;
     }
+
+    function desactivarProducto(id) {
+        if (!confirm('¿Deseas desactivar este producto?')) return;
+
+        fetch(`?handler=DesactivarProducto&id=${id}`, {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken':
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            mostrarMensaje(data.message, data.isSuccess ? 'success' : 'danger');
+
+            if (data.isSuccess) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            }
+        })
+        .catch(() => {
+            mostrarMensaje('Error inesperado', 'danger');
+        });
+    }
+
+
+        async function activarProducto(id) {
+        if (confirm("¿Estás seguro de que deseas activar este producto?")) {
+
+
+        fetch(`?handler=DesactivarProducto&id=${id}`, {
+            method: 'POST',
+            headers: {
+                'RequestVerificationToken':
+                    document.querySelector('input[name="__RequestVerificationToken"]').value
+            }
+        })
+        .then(r => r.json())
+        .then(data => {
+            mostrarMensaje(data.message, data.isSuccess ? 'success' : 'danger');
+
+            if (data.isSuccess) {
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1200);
+            }
+        })
+        .catch(() => {
+            mostrarMensaje('Error inesperado', 'danger');
+        });
+        }
+    }
+
+
+    async function cambiarPagina(page) {
+        const search = document.querySelector('[name="SearchTerm"]')?.value || '';
+
+        const html = await fetch(
+            `?handler=TablaProductos&pageNumber=${page}&searchTerm=${encodeURIComponent(search)}`
+        ).then(r => r.text());
+
+        document.getElementById('contenedorTabla').innerHTML = html;
+    }
+
 </script>
 

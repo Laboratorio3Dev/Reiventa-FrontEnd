@@ -1,4 +1,5 @@
-﻿using System.Net.Http.Headers;
+﻿using BootstrapBlazor.Components;
+using System.Net.Http.Headers;
 using WebBackOffice.DTO.Aprendizaje;
 using WebBackOffice.DTO.Oficinas;
 using static System.Net.WebRequestMethods;
@@ -52,6 +53,71 @@ namespace WebBackOffice.Pages.Repositorios
             return await response.Content
                 .ReadFromJsonAsync<ResponseTransacciones>();
         }
+
+        public async Task<ResponseTransacciones> ObtenerProductoPorId(
+    string token, int id)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+        new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _http.GetFromJsonAsync<ResponseTransacciones>(
+                $"api/Oficinas/AdminHoudini/{id}"
+            );
+
+            return response!;
+        }
+
+        public async Task<ResponseTransacciones> ActualizarProducto(
+    string token,
+    ProductoDTO producto)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _http.PutAsJsonAsync(
+                "api/Oficinas/AdminHoudini/Actualizar",
+                producto
+            );
+
+            return await response.Content
+                .ReadFromJsonAsync<ResponseTransacciones>();
+        }
+
+
+
+
+    public async Task<ResponseTransacciones> CambiarEstadoProducto(
+    string token,
+    int idProducto,
+    bool activar)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var payload = new
+            {
+                IdProducto = idProducto,
+                Activar = activar
+            };
+
+            var response = await _http.PostAsJsonAsync(
+                "api/Oficinas/AdminHoudini/CambiarEstado",
+                payload
+            );
+
+            if (!response.IsSuccessStatusCode)
+            {
+                return new ResponseTransacciones
+                {
+                    IsSuccess = false,
+                    Message = "Error al cambiar el estado del producto"
+                };
+            }
+
+            return await response.Content
+                .ReadFromJsonAsync<ResponseTransacciones>();
+        }
+
 
     }
 }
