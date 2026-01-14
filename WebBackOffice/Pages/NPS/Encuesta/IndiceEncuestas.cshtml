@@ -24,17 +24,13 @@
             <div class="card-body">
                 <!-- En Razor: filtros por GET -->
                 <form method="get">
-                    <input type="hidden" name="currentPage" value="@Model.currentPage" />
-                    <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
-                    <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
-                    <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
-                    <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
-                    <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
-                    <div class="row g-3">
+                    <input type="hidden" name="currentPage" value="1" />
 
+                    <div class="row g-3">
                         <div class="col-md-3 col-sm-6">
                             <label class="form-label">Buscar por nombre</label>
-                            <input type="text" class="form-control" placeholder="Ingrese nombre..."
+                            <input type="text" class="form-control"
+                                   placeholder="Ingrese nombre..."
                                    name="SearchTerm" value="@Model.SearchTerm" />
                         </div>
 
@@ -73,28 +69,8 @@
                                 <i class="bi bi-x-circle me-1"></i> Limpiar filtros
                             </a>
 
-                            <!-- Exportar Excel (tu método en Blazor era placeholder, acá lo dejamos como handler) -->
-                            <form method="post" class="m-0">
-
-                                <input type="hidden" name="currentPage" value="@Model.currentPage" />
-                                <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
-                                <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
-                                <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
-                                <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
-                                <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
-                                @if (Model.formModel.FlagBase && !Model.EsSoloLectura)
-                                {
-                                    <button class="btn btn-outline-success" type="submit" formaction="?handler=ExportarBaseCargada">
-                                        <i class="bi bi-file-earmark-excel me-1"></i> Exportar base cargada
-                                    </button>
-                                }
-                            </form>
-
-                            <button class="btn btn-primary" type="submit">
-                                Filtrar
-                            </button>
+                            <button class="btn btn-primary" type="submit">Filtrar</button>
                         </div>
-
                     </div>
                 </form>
             </div>
@@ -256,7 +232,12 @@
                                             onclick="copyToClipboard('@(e.Link ?? "")'); alert('Link copiado al portapapeles');">
                                         <i class="bi bi-link-45deg"></i>
                                     </button>
-
+                                    <button type="button"
+                                            class="btn btn-sm btn-outline-danger"
+                                            title="Eliminar encuesta"
+                                            onclick="openDeleteModal(@e.IdEncuesta, '@(e.NombreEncuesta?.Replace("'", "\\'") ?? "")')">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
                                 </div>
                             </td>
                         </tr>
@@ -337,13 +318,22 @@
                                                     </form>
                                                 </li>
                                             }
-
+                                            <li>
+                                                <button type="button"
+                                                        class="dropdown-item text-danger js-open-delete"
+                                                        data-id="@e.IdEncuesta"
+                                                        data-nombre="@e.NombreEncuesta">
+                                                    <i class="bi bi-trash me-2"></i> Eliminar encuesta
+                                                </button>
+                                            </li>
                                             <li>
                                                 <button type="button" class="dropdown-item"
                                                         onclick="copyToClipboard('@(e.Link ?? "")'); alert('Link copiado al portapapeles');">
                                                     <i class="bi bi-link-45deg me-2 text-secondary"></i> Copiar link
                                                 </button>
+
                                             </li>
+                                           
                                         </ul>
                                     </div>
                                 </div>
@@ -503,29 +493,38 @@
                             <label class="form-label">Imagen para Login</label>
 
                             <!-- Preview -->
-                            <div class="mb-2">
+                            <div class="mt-2">
                                 <img id="loginImagePreview"
-                                     src="@(Model.formModel.IdEncuesta > 0 ? $"/Encuestas/NPS?handler=LoginImage&idEncuesta={Model.formModel.IdEncuesta}&v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}" : "")"
+                                     src="@($"/Encuestas/NPS?handler=LoginImageDraft&v={DateTimeOffset.UtcNow.ToUnixTimeSeconds()}")"
                                      alt="Preview"
-                                     style="@(Model.formModel.IdEncuesta > 0 ? "display:inline-block; max-height:120px; width:auto; border-radius:8px;" : "display:none; max-height:120px; width:auto; border-radius:8px;")"
+                                     style="@(Model.formModel?.ImagenLogin?.Length > 0 || Model.formModel?.IdEncuesta > 0
+                                                   ? "display:inline-block; max-height:120px; width:auto; border-radius:8px;"
+                                                   : "display:none; max-height:120px; width:auto; border-radius:8px;")"
                                      class="shadow-sm" />
                             </div>
-
                             <input type="file"
                                    class="form-control"
                                    asp-for="ImagenLoginFile"
                                    accept="image/*"
-                                   id="ImagenLoginFileInput" />
+                                   id="ImagenLoginFileInput"
+                                   onchange="document.getElementById('frmEncuesta').action='?handler=CargarImagenLogin'; document.getElementById('frmEncuesta').submit();" />
                         </div>
-
+                        
                         <div id="baseFileContainer" class="mb-3" style="display:none">
-                            <label class="form-label">Archivo Base (Excel/CSV)</label>
-                            <input type="file"
-                                   class="form-control"
-                                   name="BaseFile"
-                                   accept=".xlsx,.csv" />
-                        </div>
+                        <label class="form-label">Archivo Base (Excel/CSV)</label>
+                        <input type="file"
+                               class="form-control"
+                               name="BaseFile"
+                               id="BaseFileInput"
+                               accept=".xlsx,.csv" />
 
+                        @if (Model.clientesEncuesta != null && Model.clientesEncuesta.Any())
+                        {
+                            <small class="text-success">
+                                Base cargada: <strong>@Model.clientesEncuesta.Count</strong> registros
+                            </small>
+                        }
+                    </div>
                         <div class="mt-4">
 
                             @if (!Model.EncuestaConRespuestas && !Model.EsSoloLectura)
@@ -615,7 +614,7 @@
                                 <i class="bi bi-save me-1"></i> Guardar
                             </button>
                         }
-                        @if (!Model.EsSoloLectura && Model.preguntasDisponibles.Any() && Model.formModel.IdEncuesta > 0)
+                        @if (!Model.EsSoloLectura && Model.preguntasDisponibles.Any())
                         {
                             <button class="btn btn-warning" type="submit" formaction="?handler=AbrirVistaPrevia">
                                 <i class="bi bi-eye me-1"></i> Vista Previa
@@ -902,6 +901,59 @@
             </div>
         </div>
     }
+<!-- Modal Eliminar Encuesta -->
+<div class="modal fade" id="deleteEncuestaModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg rounded-4">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-trash me-2"></i> Eliminar encuesta
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body">
+                <p class="mb-2">¿Seguro que deseas eliminar esta encuesta?</p>
+                <p class="fw-semibold text-dark" id="deleteEncuestaNombre"></p>
+                <div class="alert alert-warning mb-0">
+                    Esta acción no se puede deshacer.
+                </div>
+            </div>
+
+            <div class="modal-footer border-top-0">
+                <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                    Cancelar
+                </button>
+
+                <form method="post" class="m-0">
+                    <input type="hidden" name="currentPage" value="@Model.currentPage" />
+                    <input type="hidden" name="SearchTerm" value="@Model.SearchTerm" />
+                    <input type="hidden" name="SelectedEstado" value="@Model.SelectedEstado" />
+                    <input type="hidden" name="SelectedTipoPersona" value="@Model.SelectedTipoPersona" />
+                    <input type="hidden" name="FechaInicioFiltro" value="@(Model.FechaInicioFiltro?.ToString("yyyy-MM-dd"))" />
+                    <input type="hidden" name="FechaFinFiltro" value="@(Model.FechaFinFiltro?.ToString("yyyy-MM-dd"))" />
+
+                    <input type="hidden" id="deleteEncuestaId" name="IdEncuesta" value="" />
+
+                    <button type="submit" class="btn btn-danger" formaction="?handler=EliminarEncuesta">
+                        Sí, eliminar
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function openDeleteModal(id, nombre) {
+        document.getElementById('deleteEncuestaId').value = id;
+        document.getElementById('deleteEncuestaNombre').textContent = nombre || ('ID ' + id);
+
+        const modalEl = document.getElementById('deleteEncuestaModal');
+        const modal = new bootstrap.Modal(modalEl);
+        modal.show();
+    }
+</script>
 
     <style>
         /* Solo para este modal */
@@ -938,7 +990,9 @@
         navigator.clipboard.writeText(text);
     }
 </script>
+
 <script>
+
         function setIdPregunta(id) {
       const el = document.getElementById('IdPregunta');
       if (el) el.value = id;
@@ -1007,4 +1061,48 @@
         img.onload = () => URL.revokeObjectURL(url);
       });
     })();
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const input = document.getElementById('BaseFileInput');
+      const form = document.getElementById('frmEncuesta'); // tu form del modal
+
+      if (!input || !form) return;
+
+      input.addEventListener('change', function () {
+        if (!this.files || this.files.length === 0) return;
+
+        // manda el POST al handler que parsea y guarda en Session
+        form.action = '?handler=CargarBase';
+        form.submit();
+      });
+    });
+</script>
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const input = document.getElementById('ImagenLoginFileInput');
+        const form  = document.getElementById('frmEncuesta');
+
+        if (!input || !form) return;
+
+        input.addEventListener('change', function () {
+            if (!this.files || this.files.length === 0) return;
+
+            // sube la imagen al backend y guárdala en Session
+            form.action = '?handler=CargarImagenLogin';
+            form.submit();
+        });
+    });
+
+</script>
+<script>
+    document.addEventListener('click', function (e) {
+      const btn = e.target.closest('.js-open-delete');
+      if (!btn) return;
+
+      const id = btn.dataset.id;
+      const nombre = btn.dataset.nombre || '';
+
+      openDeleteModal(id, nombre); // tu función existente
+    });
 </script>
