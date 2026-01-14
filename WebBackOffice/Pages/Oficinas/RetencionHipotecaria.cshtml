@@ -27,7 +27,7 @@
                 </div>
 
                 <div class="col-md-3">
-                    <button class="btn btn-primary w-100" onclick="paginaActual = 1; buscar()">
+                    <button class="btn btn-primary w-100" onclick="buscar(1)">
                         <i class="bi bi-search"></i> Buscar
                     </button>
                 </div>
@@ -36,33 +36,20 @@
         </div>
     </div>
 
-    <button class="btn btn-primary" onclick="nuevoRetencionHipotecaria()">
-        <i class="bi bi-plus-circle"></i> Nueva Solicitud
-    </button>
-    <br />
-    <br />
-    <div class="row" id="resumenEstados"></div>
     <!-- ================= TABLA ================= -->
     <div class="table-responsive shadow-sm">
         <table class="table table-striped table-bordered align-middle">
             <thead class="table-primary text-center">
                 <tr>
-                    <th>FECHA SOLICITUD</th>
-                    <th>NRO PRÉSTAMO</th>
-                    <th>TASA SOLICITADA</th>
-                    <th>TASA RESPUESTA</th>
-                    <th>ESTADO</th>
-                    <th>SALDO</th>
-                    <th>MONEDA</th>
-                    <th>ENTIDAD</th>
-                    <th>TASA OFRECIDA</th>
-                    <th>PRODUCTO</th>
-                 
-               
-                   
-                  
-                   
-                   
+                    <th>ID</th>
+                    <th>Producto</th>
+                    <th>DNI</th>
+                    <th>Moneda</th>
+                    <th>Tasa Sol.</th>
+                    <th>Tasa Of.</th>
+                    <th>Entidad</th>
+                    <th>Estado</th>
+                    <th>Fecha</th>
                 </tr>
             </thead>
             <tbody id="tbodySolicitudes">
@@ -90,174 +77,37 @@
 
         <button class="btn btn-outline-secondary"
                 id="btnNext"
-                onclick="cambiarPagina(1)">
-            
+                onclick="cambiarPagina(1)"
+                disabled>
             Siguiente
         </button>
     </div>
 
 </div>
 
-
-
-<div class="modal fade" id="modalRetencionHipotecaria" tabindex="-1">
-    <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content">
-
-            <div class="modal-header bg-primary text-white">
-                <h5 class="modal-title" id="modalTitulo">Nuevo Producto</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
-            </div>
-
-            <div class="modal-body">
-
-                <!-- FORM NECESARIO -->
-                <form id="frmProducto" method="post">
-                    @Html.AntiForgeryToken()
-
-                    <input type="hidden" id="IdSolicitud" name="IdSolicitud" />
-
-                    <div class="row g-3">
-
-                        <div class="col-md-4">
-                            <label for="NroPrestamo">Nro Préstamo</label>
-                            <input id="NroPrestamo" class="form-control required" name="NroPrestamo" required maxlength="50" />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="TasaSolicitada">Tasa Solicitada</label>
-                            <input id="TasaSolicitada" class="form-control required" name="TasaSolicitada" type="number" step="0.01" required />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="Moneda">Moneda</label>
-                            <select id="Moneda" class="form-select required" name="Moneda" required>
-                                <option value="">Seleccione</option>
-                                <option value="S">Soles</option>
-                                <option value="D">Dólares</option>
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="SaldoCredito">Saldo Crédito</label>
-                            <input id="SaldoCredito" class="form-control required" name="SaldoCredito" type="number" step="0.01" required />
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="EntidadId">Entidad</label>
-                            <select id="EntidadId" class="form-select required" name="EntidadId">
-                              
-                            </select>
-                        </div>
-
-                        <div class="col-md-4">
-                            <label for="TasaOfrecida">Tasa Ofrecida</label>
-                            <input id="TasaOfrecida" class="form-control required" name="TasaOfrecida" type="number" step="0.01" />
-                        </div>
-
-                        <div class="col-md-12">
-                            <label for="ProductoId">Producto a Vincular</label>
-                            <select id="ProductoId" class="form-select required" name="ProductoId">
-                               @*  @foreach (var p in Model.Productos)
-                                {
-                                    <option value="@p.Id">@p.Nombre</option>
-                                } *@
-                            </select>
-                        </div>
-                      </div>  
-                </form>
-
-            
-            </div>
-
-            <div class="modal-footer">
-                <button class="btn btn-secondary" data-bs-dismiss="modal">
-                    Cerrar
-                </button>
-                <button class="btn btn-primary" type="button" onclick="guardarProducto()">
-                    Guardar
-                </button>
-            </div>
-
-        </div>
-    </div>
-</div>
-
+@section Scripts {
 <script>
     let paginaActual = 1;
     const pageSize = 10;
-    let modalRetencionHipotecaria;
 
-    document.addEventListener("DOMContentLoaded", function () {
-        // Corrección: Asegúrate de que el ID coincida y no dejar comentarios a medias
-        const modalElement = document.getElementById('modalRetencionHipotecaria');
-        if (modalElement) {
-            modalRetencionHipotecaria = new bootstrap.Modal(modalElement);
-        }
-         const hoy = new Date().toISOString().split('T')[0];
-
-    document.getElementById('fechaInicio').value = hoy;
-    document.getElementById('fechaFin').value = hoy;
-        // Opcional: Cargar los combos apenas inicie la página
-        cargarProductos();
-        cargarEntidades();
-        buscar();
-    });
-
-    function nuevoRetencionHipotecaria() {
-        document.getElementById('modalTitulo').innerText = 'Nuevo';
-
-        // Limpiar formulario
-        document.getElementById('IdSolicitud').value = '';
-        document.getElementById('NroPrestamo').value = '';
-        document.getElementById('TasaSolicitada').value = '';
-        document.getElementById('Moneda').value = '';
-        document.getElementById('SaldoCredito').value = '';
-        document.getElementById('EntidadId').value = '';
-        document.getElementById('TasaOfrecida').value = '';
-        document.getElementById('ProductoId').value = '';
-
-        modalRetencionHipotecaria.show();
-    }
-
-  
-
-
-        function buscar() {
+    function buscar(pagina) {
+        paginaActual = pagina;
 
         const fechaInicio = document.getElementById('fechaInicio').value;
         const fechaFin = document.getElementById('fechaFin').value;
 
-        if (typeof showLoading === "function") showLoading();
+        showLoading();
 
-       const params = new URLSearchParams({
-        fechaInicio: fechaInicio,
-        fechaFin: fechaFin,
-        pageNumber: paginaActual,    
-        pageSize: pageSize     
-    });
-  
-  
-
-              fetch(`?handler=Listar&${params.toString()}`)
-        .then(async r => {
-            if (!r.ok) {
-                const text = await r.text();
-                throw new Error(text);
-            }
-            return r.json();
-        })
-        .then(data => {
-            renderTabla(data.listado.items);
-            actualizarPaginado(data.listado.total);
-           renderResumenEstados(data.estados);
-        })
-        .catch(err => {
-            console.error("❌ ERROR FETCH:", err);
-            alert("Error cargando datos. Revisa consola.");
-        }).finally(() => {
-                if (typeof hideLoading === "function") hideLoading();
-            });
+        fetch(`?handler=Listar&fechaInicio=${fechaInicio}&fechaFin=${fechaFin}&page=${paginaActual}`)
+            .then(r => r.json())
+            .then(data => {
+                renderTabla(data);
+                actualizarPaginado(data.length);
+            })
+            .catch(() => {
+                alert('Error cargando datos');
+            })
+            .finally(() => hideLoading());
     }
 
     function renderTabla(data) {
@@ -277,168 +127,35 @@
         data.forEach(r => {
             tbody.innerHTML += `
                 <tr class="text-center">
-                <td>${formatearFecha(r.fechA_REGISTRO)}</td>
-                <td>${r.dnI_CLIENTE}</td>
-                <td>${r.tasA_SOLICITADA}</td> 
-                <td>${r.tasA_RESPUESTA}</td> 
-                <td>${renderEstado(r.estado)}</td>
-                <td>${r.saldO_CREDITO }</td>
-                <td>${r.moneda}</td>
-                <td>${r.entidad}</td>
-                <td>${r.tasA_OFRECIDA }</td>
-                <td>${r.producto}</td>
+                    <td>${r.id}</td>
+                    <td>${r.producto}</td>
+                    <td>${r.dni_Cliente}</td>
+                    <td>${r.moneda}</td>
+                    <td>${r.tasa_Solicitada}</td>
+                    <td>${r.tasa_Ofrecida ?? '-'}</td>
+                    <td>${r.entidad}</td>
+                    <td>${r.estado}</td>
+                    <td>${formatearFecha(r.fecha_Registro)}</td>
                 </tr>`;
         });
     }
 
-
-           function actualizarPaginado(total) {
-
-        const totalPaginas = Math.ceil(total / pageSize);
-
+    function actualizarPaginado(total) {
         document.getElementById('lblPagina').innerText =
-            `Página ${paginaActual} de ${totalPaginas}`;
+            `Página ${paginaActual}`;
 
-        document.getElementById('btnPrev').disabled =
-            paginaActual <= 1;
-
-        document.getElementById('btnNext').disabled =
-            paginaActual >= totalPaginas;
+        document.getElementById('btnPrev').disabled = paginaActual <= 1;
+        document.getElementById('btnNext').disabled = total < pageSize;
     }
 
-
-      function cambiarPagina(delta) {
-          debugger;
-        paginaActual += delta;
-
-        if (paginaActual < 1) paginaActual = 1;
-
-        buscar();
+    function cambiarPagina(delta) {
+        buscar(paginaActual + delta);
     }
-
 
     function formatearFecha(fecha) {
         if (!fecha) return '';
         return new Date(fecha).toLocaleDateString();
     }
-
-    function cargarProductos() {
-    
-
-
-            fetch(`?handler=ListarProducto`)
-            .then(r => r.json())
-            .then(data => {
-                const combo = document.getElementById('ProductoId');
-                if(!combo) return;
-
-                combo.innerHTML = '<option value="">Seleccione</option>';
-                data.forEach(p => {
-                    combo.innerHTML += `<option value="${p.id}">${p.producto}</option>`;
-                });
-            })
-            .catch(() => {
-                alert('Error cargando datos');
-            })
-            .finally(() => {
-               // if (typeof hideLoading === "function") hideLoading();
-            });
-    } 
-
-    function cargarEntidades() {
-
-        
-   
-            fetch(`?handler=ListarEntidades`)
-            .then(r => r.json())
-            .then(data => {
-                const combo = document.getElementById('EntidadId');
-                if(!combo) return;
-
-                combo.innerHTML = '<option value="">Seleccione</option>';
-                data.forEach(p => {
-                    combo.innerHTML += `<option value="${p.id}">${p.entidad}</option>`;
-                });
-            })
-            .catch(() => {
-                alert('Error cargando datos');
-            })
-            .finally(() => {
-              
-            });
-    }
-
-    async function guardarProducto() {
-    if (!ValidarFormulario("modalRetencionHipotecaria")) {
-               return;
-           }
-        try {
-            const form = document.getElementById('frmProducto');
-            const formData = new FormData(form);
-
-            const data = await fetchConLoading(
-                '?handler=Guardar',
-                {
-                    method: 'POST',
-                    body: formData
-                }
-            );
-
-            if (!data.isSuccess) {
-                // MuestraMensaje("ERROR.", data.message, "E");
-                alert(data.message);
-                return;
-            }
-
-            MuestraMensaje("CORRECTO.", data.message, "OK");
-
-            modalRetencionHipotecaria.hide();
-
-            buscar(); 
-
-        } catch (err) {
-            console.error(err);
-            MuestraMensaje("ERROR.", "Error inesperado", "E");
-        }
-    }
-
-        function renderEstado(estado) {
-
-        switch (estado) {
-            case 1:
-                return `<span class="badge bg-success">APROBADO</span>`;
-            case 2:
-                return `<span class="badge bg-danger">PROPUESTA</span>`;
-            case 3:
-                return `<span class="badge bg-secondary">NO APLICA</span>`;
-            default:
-                return `<span class="badge bg-light text-dark">SIN ESTADO</span>`;
-        }
-    }
-
-
-        function renderResumenEstados(estados) {
-
-        const contenedor = document.getElementById("resumenEstados");
-        contenedor.innerHTML = "";
-
-        estados.forEach(e => {
-
-            const color =
-                e.estado === 1 ? "#198754" :
-                e.estado === 2 ? "#dc3545" :
-                "#6c757d";
-
-            contenedor.innerHTML += `
-                <div class="col-md-4 mb-3">
-                    <div class="card text-center p-3 shadow-sm">
-                        <strong>${e.estadoTexto}</strong>
-                        <h3 style="color:${color}">${e.porcentaje}%</h3>
-                        <small class="text-muted">${e.cantidad} registros</small>
-                    </div>
-                </div>
-            `;
-        });
-    }
-
 </script>
+}
+
