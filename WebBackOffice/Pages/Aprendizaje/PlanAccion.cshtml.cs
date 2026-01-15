@@ -104,21 +104,34 @@ namespace WebBackOffice.Pages.Aprendizaje
             SeleccionDimension ??= Dimensiones.FirstOrDefault()?.Id;
         }
 
+        //public async Task<JsonResult> OnGetFiltrarAjax(int? productoId, int? dimensionId)
+        //{
+        //    var token = HttpContext.Session.GetString("Token");
+        //    var tareas = await _service.Tareas(token, productoId, dimensionId);
+
+        //    // Mapear solo lo necesario para el frontend
+        //    var result = tareas.Select(t => new
+        //    {
+        //        id = t.ID_TAREA,
+        //        nombre = t.TAREA // o la propiedad correcta
+        //    }).ToList();
+
+        //    return new JsonResult(result);
+        //}
+
         public async Task<JsonResult> OnGetFiltrarAjax(int? productoId, int? dimensionId)
         {
             var token = HttpContext.Session.GetString("Token");
             var tareas = await _service.Tareas(token, productoId, dimensionId);
 
-            // Mapear solo lo necesario para el frontend
-            var result = tareas.Select(t => new
+            var result = tareas.Select(t => new TareaSimpleDTO
             {
-                id = t.ID_TAREA,
-                nombre = t.TAREA // o la propiedad correcta
+                Id = t.ID_TAREA,
+                Nombre = t.TAREA
             }).ToList();
 
             return new JsonResult(result);
         }
-
 
 
 
@@ -167,7 +180,11 @@ namespace WebBackOffice.Pages.Aprendizaje
                 "PlanesAccion.xlsx"
             );
         }
-
+        public class TareaSimpleDTO
+        {
+            public int Id { get; set; }
+            public string Nombre { get; set; }
+        }
 
 
         [BindProperty]
@@ -307,11 +324,38 @@ namespace WebBackOffice.Pages.Aprendizaje
             return RedirectToPage();
         }
 
-
+        public byte[]? EvidenciaArchivo { get; set; }
+        public string? EvidenciaNombre { get; set; }
+        public string? EvidenciaContentType { get; set; }
 
         // Agrega esta propiedad para capturar el archivo del formulario
         [BindProperty]
         public IFormFile ArchivoEvidencia { get; set; }
+
+        public async Task<IActionResult> OnGetDescargarEvidencia(int idPlanAccion)
+        {
+            var token = HttpContext.Session.GetString("Token");
+            var usuario = HttpContext.Session.GetString("Usuario");
+
+            if (string.IsNullOrEmpty(token) || string.IsNullOrEmpty(usuario))
+                return Unauthorized();
+
+            var todos = await _service.PlanesAccionId(token, usuario, idPlanAccion);
+
+            if (todos == null || !todos.Any())
+                return NotFound("No se encontró el plan de acción.");
+
+            var evidencia = todos[0].Evidencia;
+
+            if (evidencia == null || evidencia.Archivo == null)
+                return NotFound("No existe evidencia para descargar.");
+
+            return File(
+                evidencia.Archivo,
+                evidencia.ContentType ?? "application/octet-stream",
+                evidencia.Nombre ?? "evidencia"
+            );
+        }
 
         public async Task<IActionResult> OnPostGuardarGestionAsync()
         {

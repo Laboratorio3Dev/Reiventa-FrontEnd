@@ -59,6 +59,26 @@ namespace WebBackOffice.Pages.Repositorios
             return null;
         }
 
+        public async Task<List<PlanAccionDTO>> PlanesAccionId(string token, string Usuario,int IdPlan)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+              new AuthenticationHeaderValue("Bearer", token);
+
+            RequestPlanAccionID request = new RequestPlanAccionID();
+            request.Usuario = Usuario;
+            request.IdPlanAccion = IdPlan;
+
+            var response = await _http.PostAsJsonAsync("api/BackOffice/Aprendizaje/PlanesAccionId", request);
+
+
+            if (response.IsSuccessStatusCode)
+            {
+                return await response.Content.ReadFromJsonAsync<List<PlanAccionDTO>>();
+            }
+
+            return null;
+        }
+
         public async Task<ResponseTransacciones?> IniciarPlan(string token, InicioPlanDTO request)
         {
             _http.DefaultRequestHeaders.Authorization =

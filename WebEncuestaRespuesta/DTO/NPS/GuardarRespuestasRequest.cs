@@ -4,6 +4,7 @@
     {
         public string EncuestaToken { get; set; } = "";
         public string UsuarioToken { get; set; } = "";
+        public string IP_REGISTRO { get; set; } = "";
         public List<DetalleRespuestaDto> Detalles { get; set; } = new();
     }
 }

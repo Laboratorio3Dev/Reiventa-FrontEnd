@@ -217,6 +217,8 @@ namespace WebBackOffice.Pages.NPS.Encuesta
             {
                 EncuestaToken = encuestaToken,
                 UsuarioToken = usuarioToken,
+                // IP_REGISTRO = HttpContext.Connection.RemoteIpAddress?.ToString(),
+                IP_REGISTRO = HttpContext.Request.Headers["X-Forwarded-For"].FirstOrDefault()?.Split(',').First()?? HttpContext.Connection.RemoteIpAddress?.ToString(),
                 Detalles = detalles
             };
 

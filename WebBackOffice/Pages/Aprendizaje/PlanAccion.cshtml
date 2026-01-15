@@ -277,6 +277,7 @@
                                         data-comentario="@item.Comentario"                               
                                         data-tarea="@item.TAREA"
                                         data-fecha="@item.FECHA"
+                                        data-tiene-evidencia="@(item.Evidencia != null ? "1" : "0")"
                                         data-usuario="@item.USUARIO">
                                     <i class="bi bi-check2-square"></i> Revisar
                                 </button>
@@ -488,6 +489,7 @@
                     <div class="mb-3">
                         <label class="form-label"><strong>Evidencia / Comentario:</strong></label>
                         <textarea name="NuevoPlan.Comentario" id="comentarioGO" class="form-control" rows="4" required></textarea>
+                        <div id="contenedorEvidenciaGO" class="mt-3"></div>
                     </div>
 
                     <!-- Solo se muestra el input de archivo si el rol es Ejecutivo -->
@@ -566,6 +568,7 @@
             document.addEventListener('DOMContentLoaded', function () {
         const modalGO = document.getElementById('modalGO');
         if (modalGO) {
+            
             modalGO.addEventListener('show.bs.modal', function (event) {
                 const button = event.relatedTarget; // Botón que abrió el modal
 
@@ -576,6 +579,7 @@
                 const tarea = button.getAttribute('data-tarea');
                 const fecha = button.getAttribute('data-fecha');
                 const usuario = button.getAttribute('data-usuario');
+                const tieneEvidencia = button.getAttribute('data-tiene-evidencia');
                 const comentarioPrevio = button.getAttribute('data-comentario');
 
                 // Asignación segura a los elementos del modal
@@ -585,9 +589,30 @@
                 document.getElementById('modalTareaGO').textContent = tarea || '';
                 document.getElementById('modalFechaGO').textContent = fecha || '';
                 document.getElementById('modalUsuarioGO').textContent = usuario || '';
-
+                
                 // Si hay un comentario previo (ej. observación), ponerlo en el textarea
                 document.getElementById('comentarioGO').value = comentarioPrevio || '';
+
+                 const contenedor = document.getElementById('contenedorEvidenciaGO');
+
+                if (tieneEvidencia === "1") {
+                    contenedor.innerHTML = `
+                        <div class="alert alert-info">
+                            <strong>Evidencia adjunta:</strong><br>
+                            <a class="btn btn-outline-primary btn-sm mt-2"
+                               href="?handler=DescargarEvidencia&idPlanAccion=${id}">
+                                Descargar evidencia
+                            </a>
+                        </div>
+                    `;
+                } else {
+                    contenedor.innerHTML = `
+                        <div class="text-muted">
+                            No se adjuntó evidencia.
+                        </div>
+                    `;
+                }
+
             });
         }
     });

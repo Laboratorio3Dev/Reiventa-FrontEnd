@@ -37,7 +37,7 @@ builder.Services
     {
         options.LoginPath = "/BackOffice/Login";
         options.AccessDeniedPath = "/BackOffice/AccesoDenegado";
-        options.ExpireTimeSpan = TimeSpan.FromHours(2);
+        options.ExpireTimeSpan = TimeSpan.FromMinutes(20);
         options.SlidingExpiration = true;
     });
 
@@ -58,7 +58,7 @@ ExcelPackage.License.SetNonCommercialOrganization("WebBackOffice");
 
 
 builder.Services.AddSession(options => {
-    options.IdleTimeout = TimeSpan.FromHours(1);
+    options.IdleTimeout = TimeSpan.FromMinutes(20);
     options.Cookie.HttpOnly = true;
     options.Cookie.IsEssential = true;
 });

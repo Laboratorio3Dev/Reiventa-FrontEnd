@@ -1,4 +1,5 @@
 ﻿@page "/Aprendizaje/Dashboard"
+@using System.Globalization
 @model WebBackOffice.Pages.Aprendizaje.DashboardModel
 
 <h3 class="fw-bold mb-3">Dashboard de Aprendizaje</h3>
@@ -30,8 +31,13 @@
                 <option value="">Todos</option>
                 @foreach (var m in Model.Meses)
                 {
+                    var nombreMes = CultureInfo
+                    .GetCultureInfo("es-ES")
+                    .DateTimeFormat
+                    .GetMonthName(m);
+                    nombreMes = CultureInfo.CurrentCulture.TextInfo.ToTitleCase(nombreMes);
                     <option value="@m" selected="@(m == Model.Mes)">
-                        @m
+                        @nombreMes
                     </option>
                 }
             </select>

@@ -33,7 +33,6 @@ public class LoginModel : PageModel
 
         if (response.IsSuccess)
         {
-            // 🔐 Guardar sesión (ejemplo simple)
             HttpContext.Session.SetString("Username", response.NombreCompleto);
             HttpContext.Session.SetString("Usuario", response.UsuarioWindows);
             HttpContext.Session.SetString("Correo", response.Correo);
