@@ -1,0 +1,103 @@
+﻿@using WebBackOffice.ViewModels.Oficinas
+@model GestionClienteVM
+
+<h5 class="text-center mb-4">Registro de Gestión Cliente</h5>
+
+@if (!string.IsNullOrEmpty(Model.CanalContacto))
+{
+    <div class="badge bg-secondary mb-3">
+        @Model.CanalContacto
+    </div>
+}
+
+<div class="row g-3 mb-3">
+
+    <div class="col-md-6">
+        <label class="form-label text-primary">DOCUMENTO</label>
+        <input class="form-control" value="@Model.Documento" disabled />
+    </div>
+
+    <div class="col-md-6">
+        <label class="form-label text-primary">CELULAR</label>
+        <input class="form-control" value="@Model.Celular" disabled />
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label text-primary">AGRUPACIÓN</label>
+        <select class="form-select" asp-for="Estado">
+            <option value="1">Sin Gestión</option>
+            <option value="2">Interesado</option>
+            <option value="3">No Interesado</option>
+            <option value="4">En Seguimiento</option>
+            <option value="5">Observado</option>
+            <option value="6">Rechazado</option>
+            <option value="7">No Contactable</option>
+            <option value="8">Aprobado</option>
+        </select>
+    </div>
+
+    <div class="col-md-12">
+        <label class="form-label text-primary">COMENTARIOS</label>
+        <textarea class="form-control"
+                  rows="3"
+                  asp-for="Comentarios"
+                  placeholder="Comentarios"></textarea>
+    </div>
+
+</div>
+
+<div class="text-center mb-4">
+    <button class="btn btn-primary px-4">Guardar</button>
+    <button class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
+</div>
+
+<hr />
+
+<h6 class="fw-semibold mb-3">Simulaciones</h6>
+
+<div class="table-responsive">
+    <table class="table table-sm align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>MONEDA</th>
+                <th>VALOR INMUEBLE</th>
+                <th>MONTO INICIAL</th>
+                <th>DINERO NECESITA</th>
+                <th>INGRESO MENSUAL</th>
+                <th>TIPO INGRESO</th>
+                <th>COMPARTE CUOTA</th>
+                <th>CONOCE INMUEBLE</th>
+                <th>PRIMERA VIVIENDA</th>
+            </tr>
+        </thead>
+        <tbody>
+            @if (!Model.Simulaciones.Any())
+            {
+                <tr>
+                    <td colspan="9" class="text-center text-muted">
+                        Sin simulaciones
+                    </td>
+                </tr>
+            }
+            else
+            {
+                @foreach (var s in Model.Simulaciones)
+                {
+                    <tr>
+                        <td>@s.Moneda</td>
+                        <td>@s.ValorInmueble</td>
+                        <td>@s.MontoInicial</td>
+                        <td>@s.DineroNecesita</td>
+                        <td>@s.IngresoMensual</td>
+                        <td>@s.TipoIngreso</td>
+                        <td>@(s.ComparteCuota ? "SI" : "NO")</td>
+                        <td>@(s.ConoceInmueble ? "SI" : "NO")</td>
+                        <td>@(s.PrimeraVivienda ? "SI" : "NO")</td>
+                    </tr>
+                }
+            }
+        </tbody>
+    </table>
+</div>
+
+

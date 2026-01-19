@@ -1,0 +1,202 @@
+﻿@page
+@using Microsoft.AspNetCore.Html
+@model NegocioHipotecarioModel
+@{
+    ViewData["Title"] = "Negocio Hipotecario";
+}
+
+<div class="container-fluid px-4 py-3">
+
+    <!-- ================= TÍTULO ================= -->
+    <h4 class="mb-4 fw-bold">Negocio Hipotecario</h4>
+
+    <!-- ================= RESUMEN ================= -->
+    <div class="row g-3 mb-4">
+
+        @Card("TOTAL", Model.Resumen.Total, "text-primary")
+        @Card("% de Gestión", $"{Model.Resumen.PorcentajeGestion} %", "text-info")
+        @Card("% de Contactabilidad", $"{Model.Resumen.PorcentajeContactabilidad} %", "text-success")
+        @Card("% de Aprobación", $"{Model.Resumen.PorcentajeAprobacion} %", "text-warning")
+
+        @Card("Sin Gestión", Model.Resumen.SinGestion, "text-danger")
+        @Card("Interesados", Model.Resumen.Interesados, "text-success")
+        @Card("En Seguimiento", Model.Resumen.EnSeguimiento, "text-secondary")
+        @Card("Rechazado", Model.Resumen.Rechazado, "text-muted")
+
+        @Card("No Contactable", Model.Resumen.NoContactable, "text-danger")
+        @Card("Aprobado", Model.Resumen.Aprobado, "text-success")
+        @Card("No Interesado", Model.Resumen.NoInteresado, "text-warning")
+        @Card("Observado", Model.Resumen.Observado, "text-primary")
+
+    </div>
+
+    <!-- ================= FILTROS ================= -->
+    <form method="get" class="card shadow-sm p-3 mb-4">
+        <div class="row g-3 align-items-end">
+
+            <div class="col-md-3">
+                <label class="form-label">Fecha Inicio</label>
+                <input type="date" class="form-control"
+                       asp-for="FechaInicio" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Fecha Fin</label>
+                <input type="date" class="form-control"
+                       asp-for="FechaFin" />
+            </div>
+
+            <div class="col-md-3">
+                <label class="form-label">Estados</label>
+                <select class="form-select" asp-for="Estado">
+                    <option value="">Seleccionar</option>
+                    <option value="1">Sin Gestión</option>
+                    <option value="2">Interesado</option>
+                    <option value="3">En Seguimiento</option>
+                    <option value="4">Rechazado</option>
+                    <option value="5">No Contactable</option>
+                    <option value="6">Aprobado</option>
+                    <option value="7">No Interesado</option>
+                    <option value="8">Observado</option>
+                </select>
+            </div>
+
+            <div class="col-md-3">
+                <button class="btn btn-primary w-100">
+                    Cargar Data
+                </button>
+            </div>
+            <div class="col-md-3">
+                <button type="button"
+                        class="btn btn-primary w-100"
+                        onclick="abrirNuevo()">
+                    Descarga base
+                </button>
+
+            </div>
+        </div>
+    </form>
+
+    <!-- ================= TABLA ================= -->
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+
+            <table class="table table-hover align-middle mb-0">
+
+                <thead class="table-light">
+                    <tr>
+                        <th>Acción</th>
+                        <th>Ejecutivo</th>
+                        <th>Documento</th>
+                        <th>Celular</th>
+                        <th>Correo</th>
+                        <th>Score</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    @if (!Model.Listado.Any())
+                    {
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-4">
+                                No se encontraron registros
+                            </td>
+                        </tr>
+                    }
+                    else
+                    {
+                        @foreach (var item in Model.Listado)
+                        {
+                            <tr>
+                                <td>
+                                    <a class="btn btn-sm btn-link">
+                                        Ver Detalle
+                                    </a>
+                                </td>
+                                <td>@item.Ejecutivo</td>
+                                <td>@item.Documento</td>
+                                <td>@item.Celular</td>
+                                <td>@item.Correo</td>
+                                <td>@item.Score</td>
+                                <td>@item.Fecha.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>
+                                    <span class="badge @item.ColorEstado">
+                                        @item.EstadoTexto
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    }
+                </tbody>
+
+            </table>
+
+        </div>
+    </div>
+
+</div>
+
+<div class="modal fade" id="modalGestion" tabindex="-1">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+
+            <div class="modal-header">
+                <h5 class="modal-title">Registro de Gestión Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body" id="modalGestionBody">
+                <div class="text-center text-muted py-5">
+                    Cargando...
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- ================= HELPER CARD ================= -->
+@functions {
+    IHtmlContent Card(string titulo, object valor, string color)
+    {
+        return new HtmlString($@"
+        <div class='col-md-3'>
+            <div class='card shadow-sm p-3 text-center'>
+                <small class='{color} fw-semibold'>{titulo}</small>
+                <h4 class='fw-bold mb-0'>{valor}</h4>
+            </div>
+        </div>");
+    }
+}
+
+
+<script>
+    let modalGestion;
+
+    document.addEventListener("DOMContentLoaded", function () {
+        modalGestion = new bootstrap.Modal(
+            document.getElementById('modalGestion')
+        );
+    });
+
+    function abrirNuevo() {
+
+        fetch(`?handler=Gestion`)
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('modalGestionBody').innerHTML = html;
+                modalGestion.show();
+            });
+    }
+    function abrirGestion(documento) {
+
+        fetch(`?handler=Gestion&documento=${documento}`)
+            .then(r => r.text())
+            .then(html => {
+                document.getElementById('modalGestionBody').innerHTML = html;
+                modalGestion.show();
+            });
+    }
+</script>
