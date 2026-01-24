@@ -73,28 +73,7 @@ namespace WebBackOffice.Pages.Oficinas
             return new JsonResult(producto);
         }
 
-        //public async Task<IActionResult> OnPostDesactivarProductoAsync(int id)
-        //{
-        //    var token = HttpContext.Session.GetString("Token");
-
-        //    if (string.IsNullOrEmpty(token))
-        //    {
-        //        return new JsonResult(new
-        //        {
-        //            isSuccess = false,
-        //            message = "Sesión expirada"
-        //        });
-        //    }
-
-        //    var response = await _service.DesactivarProducto(token, id);
-
-        //    return new JsonResult(new
-        //    {
-        //        isSuccess = response.IsSuccess,
-        //        message = response.Message
-        //    });
-        //}
-
+       
         public async Task<PartialViewResult> OnGetTablaProductosAsync(
       int pageNumber,
       string? searchTerm)

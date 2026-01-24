@@ -4,6 +4,7 @@ using Microsoft.Extensions.Options;
 using OfficeOpenXml;
 using System.Net.Http.Headers;
 using WebBackOffice.DTO.BackOffice;
+using WebBackOffice.Middleware;
 using WebBackOffice.Pages.Repositorios;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -23,7 +24,7 @@ builder.Services.AddHttpClient("ApiClient", (sp, client) =>
     client.BaseAddress = new Uri(settings.BaseUrl);
     client.DefaultRequestHeaders.Accept.Add(
         new MediaTypeWithQualityHeaderValue("application/json"));
-});
+}).AddHttpMessageHandler<AuthenticationHandler>(); ;
 
 
 builder.Services.Configure<FormOptions>(options =>
@@ -55,7 +56,10 @@ builder.Services.AddScoped<RetencionServices>();
 builder.Services.AddScoped<RetencionHipotecariaService>();
 
 ExcelPackage.License.SetNonCommercialOrganization("WebBackOffice");
+builder.Services.AddHttpContextAccessor();
 
+// 2. Registrar el Handler
+builder.Services.AddTransient<AuthenticationHandler>();
 
 builder.Services.AddSession(options => {
     options.IdleTimeout = TimeSpan.FromHours(1);
@@ -70,11 +74,14 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error");
     app.UseHsts();
 }
+app.UseSession();
+// Registra tu Middleware personalizado AQUÍ
+app.UseMiddleware<UnauthorizedMiddleware>();
 
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseSession();
+
 app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
