@@ -13,20 +13,20 @@
     <!-- ================= RESUMEN ================= -->
     <div class="row g-3 mb-4">
 
-        @Card("TOTAL", Model.Resumen.Total, "text-primary")
-        @Card("% de Gestión", $"{Model.Resumen.PorcentajeGestion} %", "text-info")
-        @Card("% de Contactabilidad", $"{Model.Resumen.PorcentajeContactabilidad} %", "text-success")
-        @Card("% de Aprobación", $"{Model.Resumen.PorcentajeAprobacion} %", "text-warning")
+        @Card("TOTAL", "<span id='cardTotal'>0</span>", "text-primary")
+        @Card("% de Gestión", "<span id='cardGestion'>0 %</span>", "text-info")
+        @Card("% de Contactabilidad", "<span id='cardContactabilidad'>0 %</span>", "text-success")
+        @Card("% de Aprobación", "<span id='cardAprobacion'>0 %</span>", "text-warning")
 
-        @Card("Sin Gestión", Model.Resumen.SinGestion, "text-danger")
-        @Card("Interesados", Model.Resumen.Interesados, "text-success")
-        @Card("En Seguimiento", Model.Resumen.EnSeguimiento, "text-secondary")
-        @Card("Rechazado", Model.Resumen.Rechazado, "text-muted")
+        @Card("Sin Gestión", "<span id='cardSinGestion'>0</span>", "text-danger")
+        @Card("Interesados", "<span id='cardInteresados'>0</span>", "text-success")
+        @Card("En Seguimiento", "<span id='cardSeguimiento'>0</span>", "text-secondary")
+        @Card("Rechazado", "<span id='cardRechazado'>0</span>", "text-muted")
 
-        @Card("No Contactable", Model.Resumen.NoContactable, "text-danger")
-        @Card("Aprobado", Model.Resumen.Aprobado, "text-success")
-        @Card("No Interesado", Model.Resumen.NoInteresado, "text-warning")
-        @Card("Observado", Model.Resumen.Observado, "text-primary")
+        @Card("No Contactable", "<span id='cardNoContactable'>0</span>", "text-danger")
+        @Card("Aprobado", "<span id='cardAprobado'>0</span>", "text-success")
+        @Card("No Interesado", "<span id='cardNoInteresado'>0</span>", "text-warning")
+        @Card("Observado", "<span id='cardObservado'>0</span>", "text-primary")
 
     </div>
 
@@ -36,14 +36,14 @@
 
             <div class="col-md-3">
                 <label class="form-label">Fecha Inicio</label>
-                <input type="date" class="form-control"
+                <input id="fechaInicio" type="date" class="form-control"
                        asp-for="FechaInicio" />
             </div>
 
             <div class="col-md-3">
                 <label class="form-label">Fecha Fin</label>
-                <input type="date" class="form-control"
-                       asp-for="FechaFin" />
+                <input id="fechaFin" type="date" class="form-control"
+                       asp-for="FechaFin"  />
             </div>
 
             <div class="col-md-3">
@@ -95,8 +95,14 @@
                         <th>Estado</th>
                     </tr>
                 </thead>
-
-                <tbody>
+                <tbody id="tbodySolicitudes">
+                    <tr>
+                        <td colspan="8" class="text-center text-muted">
+                            Realice una búsqueda
+                        </td>
+                    </tr>
+                </tbody>
+              @*   <tbody>
                     @if (!Model.Listado.Any())
                     {
                         <tr>
@@ -129,13 +135,34 @@
                             </tr>
                         }
                     }
-                </tbody>
+                </tbody> *@
 
             </table>
 
         </div>
     </div>
 
+
+    <!-- ================= PAGINADO ================= -->
+    <div class="d-flex justify-content-between align-items-center mt-3">
+        <button class="btn btn-outline-secondary"
+                id="btnPrev"
+                onclick="cambiarPagina(-1)"
+                disabled>
+            Anterior
+        </button>
+
+        <span id="lblPagina" class="fw-semibold">
+            Página 1
+        </span>
+
+        <button class="btn btn-outline-secondary"
+                id="btnNext"
+                onclick="cambiarPagina(1)">
+
+            Siguiente
+        </button>
+    </div>
 </div>
 
 <div class="modal fade" id="modalGestion" tabindex="-1">
@@ -173,12 +200,15 @@
 
 
 <script>
+     let paginaActual = 1;
+    const pageSize = 10;
     let modalGestion;
 
     document.addEventListener("DOMContentLoaded", function () {
         modalGestion = new bootstrap.Modal(
             document.getElementById('modalGestion')
         );
+        buscar();
     });
 
     function abrirNuevo() {
@@ -190,13 +220,222 @@
                 modalGestion.show();
             });
     }
-    function abrirGestion(documento) {
 
-        fetch(`?handler=Gestion&documento=${documento}`)
+    function abrirGestion(id,codigoCliente,documento, celular, estado,comentario) {
+
+        const params = new URLSearchParams({
+            id: id,
+            codigoCliente: codigoCliente,
+            documento: documento,
+            celular: celular,
+            estado: estado,
+            comentario:comentario
+        });
+
+        fetch(`?handler=Gestion&${params.toString()}`)
             .then(r => r.text())
             .then(html => {
                 document.getElementById('modalGestionBody').innerHTML = html;
                 modalGestion.show();
             });
     }
+
+
+
+    function buscar() {
+
+        const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
+        const Estado =document.getElementById('Estado').value==""? "": $("#Estado option:selected").text();
+        
+        if (typeof showLoading === "function") showLoading();
+
+       const params = new URLSearchParams({
+        fechaInicio: fechaInicio,
+        estado: Estado,
+        fechaFin: fechaFin,
+        pageNumber: paginaActual,
+        pageSize: pageSize
+    });
+
+
+
+       fetch(`?handler=Listar&${params.toString()}`)
+        .then(async r => {
+            if (!r.ok) {
+                const text = await r.text();
+                throw new Error(text);
+            }
+            return r.json();
+        })
+        .then(data => {
+            renderTabla(data.listado.items);
+            actualizarPaginado(data.listado.total);
+            actualizarResumen(data.resumen);
+           
+        })
+        .catch(err => {
+            console.error("❌ ERROR FETCH:", err);
+            alert("Error cargando datos. Revisa consola.");
+        }).finally(() => {
+                if (typeof hideLoading === "function") hideLoading();
+            });
+    }
+
+
+     function renderTabla(data) {
+        const tbody = document.getElementById('tbodySolicitudes');
+        tbody.innerHTML = '';
+
+        if (!data || data.length === 0) {
+            tbody.innerHTML = `
+                <tr>
+                    <td colspan="9" class="text-center text-muted">
+                        No se encontraron registros
+                    </td>
+                </tr>`;
+            return;
+        }
+
+    data.forEach(r => {
+        const claseEstado = obtenerClaseEstado(r.estado);
+
+        tbody.innerHTML += `
+            <tr class="text-left">
+                <td>
+                  <a href="#"
+                       class="btn btn-sm btn-link"
+                       onclick="abrirGestion(
+                           '${r.id}',
+                           '${r.codigocliente}',
+                           '${r.documento}',
+                           '${r.celular}',
+                           '${r.estado}',
+                           '${r.comentario}'
+                       )">
+                       Ver detalle
+                    </a>
+                </td>
+                <td>${r.ejecutivo}</td>
+                <td>${r.documento}</td>
+                <td>${r.celular}</td>
+                <td>${r.correo}</td>
+                <td>${r.score}</td>
+                <td>${formatearFecha(r.fecha)}</td>
+                <td class="text-start">
+                    <span class="${claseEstado}">
+                        ${r.estado}
+                    </span>
+                </td>
+            </tr>`;
+    });
+    }
+ 
+     function actualizarPaginado(total) {
+
+        const totalPaginas = Math.ceil(total / pageSize);
+
+        document.getElementById('lblPagina').innerText =
+            `Página ${paginaActual} de ${totalPaginas}`;
+
+        document.getElementById('btnPrev').disabled =
+            paginaActual <= 1;
+
+        document.getElementById('btnNext').disabled =
+            paginaActual >= totalPaginas;
+    }
+
+
+      function cambiarPagina(delta) {
+   
+        paginaActual += delta;
+
+        if (paginaActual < 1) paginaActual = 1;
+
+        buscar();
+    }
+        function obtenerClaseEstado(estado) {
+        switch (estado) {
+            case "Sin Gestión":
+                return "badge bg-danger";
+            case "Interesado":
+                return "badge bg-success";
+            case "En Seguimiento":
+                return "badge bg-secondary";
+            case "Rechazado":
+                return "badge bg-dark";
+            case "No Contactable":
+                return "badge bg-danger";
+            case "Aprobado":
+                return "badge bg-success";
+            case "No Interesado":
+                return "badge bg-warning text-dark";
+            case "Observado":
+                return "badge bg-primary";
+            default:
+                return "badge bg-light text-dark";
+        }
+    }
+
+        function actualizarResumen(r) {
+        document.getElementById("cardTotal").innerText = r.total;
+        document.getElementById("cardSinGestion").innerText = r.sinGestion;
+        document.getElementById("cardInteresados").innerText = r.interesados;
+        document.getElementById("cardSeguimiento").innerText = r.enSeguimiento;
+        document.getElementById("cardRechazado").innerText = r.rechazado;
+        document.getElementById("cardNoContactable").innerText = r.noContactable;
+        document.getElementById("cardAprobado").innerText = r.aprobado;
+        document.getElementById("cardNoInteresado").innerText = r.noInteresado;
+        document.getElementById("cardObservado").innerText = r.observado;
+
+        // Porcentajes (ejemplo)
+        document.getElementById("cardGestion").innerText =
+            ((r.total - r.sinGestion) * 100 / r.total).toFixed(1) + " %";
+    }
+
+
+
+       async function guardarGestion() {
+
+     
+
+         try {
+             const formData = new FormData();
+            
+                formData.append("Id", document.getElementById("gestionId").value);
+                formData.append("Estado", $("#estado option:selected").text());
+                formData.append("Comentario", document.getElementById("comentarios").value);
+
+                 // 🔥 AGREGAR ANTIFORGERY TOKEN
+        const token = document.querySelector(
+            'input[name="__RequestVerificationToken"]'
+        ).value;
+
+        formData.append("__RequestVerificationToken", token);
+
+             const data = await fetchConLoading(
+                    '?handler=GuardarGestion',
+                    {
+                        method: 'POST',
+                        body: formData
+                    }
+                );
+
+            if (!data.isSuccess) {
+              //  mostrarMensaje(data.message, 'danger');
+                MuestraMensaje("ERROR.", data.message, "E")
+                return;
+            }
+            MuestraMensaje("CORRECTO.", data.message, "OK")
+             modalGestion.hide();
+                buscar(); // refresca bandeja
+
+        } catch (err) {
+            console.log(err);
+
+             MuestraMensaje("ERROR.","Error inesperado", "E")
+        }
+    }
+
+
 </script>

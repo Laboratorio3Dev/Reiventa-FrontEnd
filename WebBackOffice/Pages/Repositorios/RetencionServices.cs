@@ -1,5 +1,6 @@
 ﻿using System.Net.Http.Headers;
 using WebBackOffice.DTO.Common;
+using WebBackOffice.DTO.Oficinas;
 
 
 namespace WebBackOffice.Pages.Repositorios
@@ -43,5 +44,10 @@ namespace WebBackOffice.Pages.Repositorios
   
             return await response.Content.ReadFromJsonAsync<ResponseTransacciones>();
         }
+
+
+
+      
+
     }
 }

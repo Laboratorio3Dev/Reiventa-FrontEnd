@@ -8,9 +8,9 @@
         public decimal DineroNecesita { get; set; }
         public decimal IngresoMensual { get; set; }
         public string TipoIngreso { get; set; }
-        public bool ComparteCuota { get; set; }
-        public bool ConoceInmueble { get; set; }
-        public bool PrimeraVivienda { get; set; }
+        public string ComparteCuota { get; set; }
+        public string ConoceInmueble { get; set; }
+        public string PrimeraVivienda { get; set; }
     }
 
 }

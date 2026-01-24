@@ -113,5 +113,87 @@ namespace WebBackOffice.Pages.Repositorios
                     Message = "Respuesta inválida del servidor"
                 };
         }
+
+
+
+        public async Task<PagedResult<ListadoHipotecarioDTO>> ListarNegocioHipotecario(
+    ListarNegocioHipotecarioRequest filtro,
+    string token)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var query = new Dictionary<string, string?>
+            {
+                ["FechaInicio"] = filtro.FechaInicio.ToString("yyyy-MM-dd"),
+                ["FechaFin"] = filtro.FechaFin.ToString("yyyy-MM-dd"),
+                ["Estado"] = filtro.Estado?.ToString(),
+                ["Page"] = filtro.Page.ToString(),
+                ["PageSize"] = filtro.PageSize.ToString()
+            };
+
+            var queryString = string.Join("&",
+                query
+                    .Where(x => !string.IsNullOrEmpty(x.Value))
+                    .Select(x => $"{x.Key}={Uri.EscapeDataString(x.Value!)}")
+            );
+
+            var url = $"api/Oficinas/NegocioHipotecario/Listar?{queryString}";
+
+            var response = await _http.GetAsync(url);
+         
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync();
+                throw new Exception(errorContent);
+            }
+
+            return await response.Content
+                .ReadFromJsonAsync<PagedResult<ListadoHipotecarioDTO>>()
+                ?? new PagedResult<ListadoHipotecarioDTO>();
+        }
+
+        public async Task<List<SimulacionHipotecariaDTO>> ListarPorCliente(
+       int codigoCliente,
+       string token)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var url = $"api/Oficinas/NegocioHipotecario/simulaciones/{codigoCliente}";
+
+            var response = await _http.GetAsync(url);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var error = await response.Content.ReadAsStringAsync();
+                throw new Exception($"Error API: {response.StatusCode} - {error}");
+            }
+
+            return await response.Content
+                .ReadFromJsonAsync<List<SimulacionHipotecariaDTO>>()
+                ?? new List<SimulacionHipotecariaDTO>();
+        }
+
+
+        public async Task<ResponseTransacciones> ActualizarGestion(
+  ActualizarGestionClienteRequest command,
+  string token)
+        {
+            _http.DefaultRequestHeaders.Authorization =
+                new AuthenticationHeaderValue("Bearer", token);
+
+            var response = await _http.PutAsJsonAsync(
+                "api/Oficinas/NegocioHipotecario/gestion",
+                command);
+
+            if (!response.IsSuccessStatusCode)
+                throw new Exception("Error actualizando gestión");
+
+            return await response.Content
+                .ReadFromJsonAsync<ResponseTransacciones>()
+                ?? new ResponseTransacciones();
+        }
+
     }
 }

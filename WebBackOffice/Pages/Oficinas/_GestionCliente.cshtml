@@ -1,6 +1,6 @@
 ﻿@using WebBackOffice.ViewModels.Oficinas
 @model GestionClienteVM
-
+@Html.AntiForgeryToken()
 <h5 class="text-center mb-4">Registro de Gestión Cliente</h5>
 
 @if (!string.IsNullOrEmpty(Model.CanalContacto))
@@ -11,7 +11,7 @@
 }
 
 <div class="row g-3 mb-3">
-
+    <input type="hidden" id="gestionId" value="@Model.Id" name="Id" />
     <div class="col-md-6">
         <label class="form-label text-primary">DOCUMENTO</label>
         <input class="form-control" value="@Model.Documento" disabled />
@@ -24,7 +24,7 @@
 
     <div class="col-md-12">
         <label class="form-label text-primary">AGRUPACIÓN</label>
-        <select class="form-select" asp-for="Estado">
+       @*  <select id="estado" class="form-select" asp-for="Estado" name="Estado">
             <option value="1">Sin Gestión</option>
             <option value="2">Interesado</option>
             <option value="3">No Interesado</option>
@@ -33,21 +33,36 @@
             <option value="6">Rechazado</option>
             <option value="7">No Contactable</option>
             <option value="8">Aprobado</option>
+        </select> *@
+        <select class="form-select" id="estado" name="Estado">
+            <option selected="@("Sin Gestión" == Model.Estado)">Sin Gestión</option>
+            <option selected="@("Interesado" == Model.Estado)">Interesado</option>
+            <option selected="@("No Interesado" == Model.Estado)">No Interesado</option>
+            <option selected="@("En Seguimiento" == Model.Estado)">En Seguimiento</option>
+            <option selected="@("Observado" == Model.Estado)">Observado</option>
+            <option selected="@("Rechazado" == Model.Estado)">Rechazado</option>
+            <option selected="@("No Contactable" == Model.Estado)">No Contactable</option>
+            <option selected="@("Aprobado" == Model.Estado)">Aprobado</option>
         </select>
     </div>
 
     <div class="col-md-12">
         <label class="form-label text-primary">COMENTARIOS</label>
-        <textarea class="form-control"
+     @*    <textarea id="comentarios" class="form-control"
                   rows="3"
                   asp-for="Comentarios"
-                  placeholder="Comentarios"></textarea>
+                  name="Comentario"
+                  placeholder="Comentarios"></textarea> *@
+<textarea class="form-control"
+          id="comentarios"
+          name="Comentario"
+          rows="3">@Model.Comentarios</textarea>
     </div>
 
 </div>
 
 <div class="text-center mb-4">
-    <button class="btn btn-primary px-4">Guardar</button>
+    <button class="btn btn-primary px-4" type="button" onclick="guardarGestion()">Guardar</button>
     <button class="btn btn-light px-4" data-bs-dismiss="modal">Cancel</button>
 </div>
 
@@ -87,12 +102,12 @@
                         <td>@s.Moneda</td>
                         <td>@s.ValorInmueble</td>
                         <td>@s.MontoInicial</td>
-                        <td>@s.DineroNecesita</td>
+                        <td>@s.DineroNecesita</td>  
                         <td>@s.IngresoMensual</td>
                         <td>@s.TipoIngreso</td>
-                        <td>@(s.ComparteCuota ? "SI" : "NO")</td>
-                        <td>@(s.ConoceInmueble ? "SI" : "NO")</td>
-                        <td>@(s.PrimeraVivienda ? "SI" : "NO")</td>
+                        <td>@(s.ComparteCuota)</td>
+                        <td>@(s.ConoceInmueble)</td>
+                        <td>@(s.PrimeraVivienda)</td>
                     </tr>
                 }
             }
