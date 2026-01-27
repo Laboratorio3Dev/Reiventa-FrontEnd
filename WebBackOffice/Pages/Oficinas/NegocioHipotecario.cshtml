@@ -62,14 +62,14 @@
             </div>
 
             <div class="col-md-3">
-                <button class="btn btn-primary w-100">
+                <button class="btn btn-primary w-100" type="button" onclick="buscar()">
                     Cargar Data
                 </button>
             </div>
             <div class="col-md-3">
                 <button type="button"
                         class="btn btn-primary w-100"
-                        onclick="abrirNuevo()">
+                        onclick="descargarExcel()">
                     Descarga base
                 </button>
 
@@ -393,11 +393,7 @@
             ((r.total - r.sinGestion) * 100 / r.total).toFixed(1) + " %";
     }
 
-
-
        async function guardarGestion() {
-
-     
 
          try {
              const formData = new FormData();
@@ -406,7 +402,7 @@
                 formData.append("Estado", $("#estado option:selected").text());
                 formData.append("Comentario", document.getElementById("comentarios").value);
 
-                 // 🔥 AGREGAR ANTIFORGERY TOKEN
+       
         const token = document.querySelector(
             'input[name="__RequestVerificationToken"]'
         ).value;
@@ -422,20 +418,32 @@
                 );
 
             if (!data.isSuccess) {
-              //  mostrarMensaje(data.message, 'danger');
+           
                 MuestraMensaje("ERROR.", data.message, "E")
                 return;
             }
-            MuestraMensaje("CORRECTO.", data.message, "OK")
-             modalGestion.hide();
-                buscar(); // refresca bandeja
+                MuestraMensaje("CORRECTO.", data.message, "OK")
+                modalGestion.hide();
+                buscar(); 
 
         } catch (err) {
-            console.log(err);
-
-             MuestraMensaje("ERROR.","Error inesperado", "E")
+           
+            MuestraMensaje("ERROR.","Error inesperado", "E")
         }
     }
 
+     function descargarExcel() {
 
+       const fechaInicio = document.getElementById('fechaInicio').value;
+        const fechaFin = document.getElementById('fechaFin').value;
+        const estado =document.getElementById('Estado').value==""? "": $("#Estado option:selected").text();
+
+        const params = new URLSearchParams({
+            fechaInicio,
+            fechaFin,
+            estado
+        });
+
+        window.location.href = `?handler=DescargarExcel&${params.toString()}`;
+    }
 </script>

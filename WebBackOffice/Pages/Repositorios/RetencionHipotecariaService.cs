@@ -129,7 +129,9 @@ namespace WebBackOffice.Pages.Repositorios
                 ["FechaFin"] = filtro.FechaFin.ToString("yyyy-MM-dd"),
                 ["Estado"] = filtro.Estado?.ToString(),
                 ["Page"] = filtro.Page.ToString(),
-                ["PageSize"] = filtro.PageSize.ToString()
+                ["PageSize"] = filtro.PageSize.ToString(),
+                ["Usuario"] = filtro.Usuario.ToString(),
+                ["NivelAcceso"] = filtro.NivelAcceso.ToString()
             };
 
             var queryString = string.Join("&",

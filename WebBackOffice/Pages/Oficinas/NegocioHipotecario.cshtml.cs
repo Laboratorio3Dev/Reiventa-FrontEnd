@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc.RazorPages;
 using OfficeOpenXml.FormulaParsing.LexicalAnalysis;
 using WebBackOffice.DTO.Oficinas;
+using WebBackOffice.Helper;
 using WebBackOffice.Infrastructure;
 using WebBackOffice.Pages.Repositorios;
 using WebBackOffice.ViewModels.Oficinas;
@@ -50,15 +51,17 @@ namespace WebBackOffice.Pages.Oficinas
         {
             var token = HttpContext.Session.GetString("Token");
             var usuario = HttpContext.Session.GetString("Usuario");
-
+            var nivel = HttpContext.Session.GetString("NivelAcceso");
             var request = new ListarNegocioHipotecarioRequest
             {
-                // Usuario solo si tu API lo exige
+                Usuario = usuario!,
+                NivelAcceso = nivel,
                 Estado = estado,
                 FechaInicio = fechaInicio,
                 FechaFin = fechaFin,
                 Page = pageNumber,
-                PageSize = PageSize
+                PageSize = PageSize,
+                
             };
             var result = await _service.ListarNegocioHipotecario(request, token);
 
@@ -120,6 +123,43 @@ namespace WebBackOffice.Pages.Oficinas
             var result = await _service.ActualizarGestion(command, token);
 
             return new JsonResult(result);
+        }
+
+
+        public async Task<IActionResult> OnGetDescargarExcelAsync(DateTime fechaInicio,DateTime fechaFin,string? estado)
+        {
+            var token = HttpContext.Session.GetString("Token");
+
+            var request = new ListarNegocioHipotecarioRequest
+            {
+                FechaInicio = fechaInicio,
+                FechaFin = fechaFin,
+                Estado = estado,
+                Page = 1,
+                PageSize = int.MaxValue // 🔥 todo para el Excel
+            };
+
+            var result = await _service.ListarNegocioHipotecario(request, token);
+
+            // 🔹 MAPEO DTO → VM
+            var listadoVm = result.Items.Select(x => new ListadoHipotecarioVM
+            {
+                Ejecutivo = x.EJECUTIVO,
+                Documento = x.DOCUMENTO,
+                Celular = x.CELULAR,
+                Correo = x.CORREO,
+                Score = x.SCORE,
+                Fecha = x.FECHA,
+                Estado = x.ESTADO
+            }).ToList();
+
+            var excelBytes = ExcelHelper.GenerarExcelNegocioHipotecario(listadoVm);
+
+            return File(
+                excelBytes,
+                "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                $"NegocioHipotecario_{DateTime.Now:yyyyMMddHHmm}.xlsx"
+            );
         }
 
     }

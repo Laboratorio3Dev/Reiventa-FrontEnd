@@ -40,7 +40,7 @@ public class LoginModel : PageModel
             HttpContext.Session.SetString("IdOficina", response.IdOficina.ToString());
             HttpContext.Session.SetString("Token", response.Token);
             HttpContext.Session.SetString("MenuUsuario",JsonSerializer.Serialize(response.MenuUsuario));
-
+         
             var roles = response.RolesUsuario;
 
             var claims = new List<Claim>
@@ -48,7 +48,7 @@ public class LoginModel : PageModel
                 new Claim(ClaimTypes.Name, response.UsuarioWindows)
             };
 
-
+            string nivelAcceso = "Ejecutivo"; // default
             if (roles != null)
             {
                 foreach (var rol in roles)
@@ -57,8 +57,19 @@ public class LoginModel : PageModel
                     if (rol.IdRol == 5) { HttpContext.Session.SetString("Rol", "EsEjecutivo") ;  }
                     if (rol.IdRol == 4) { HttpContext.Session.SetString("Rol", "EsGO") ;  }
                     if (rol.IdRol == 1 || rol.IdRol == 3) { HttpContext.Session.SetString("Rol", "EsAdmin"); }
+
+
+                    if (roles.Any(r => r.IdRol == 1))
+                        nivelAcceso = "Admin";
+                    else if (roles.Any(r => r.IdRol == 9))
+                        nivelAcceso = "Gerente";
+                    else if (roles.Any(r => r.IdRol == 10))
+                        nivelAcceso = "Zonal";
+                    else if (roles.Any(r => r.IdRol == 8))
+                        nivelAcceso = "Ejecutivo";
                 }
             }
+            HttpContext.Session.SetString("NivelAcceso", nivelAcceso);
             // Crear identidad UNA sola vez
             var identity = new ClaimsIdentity(
                 claims,
